@@ -2,7 +2,7 @@ import xml
 import xml.etree.ElementTree as ET
 
 
-def load_and_process_xml(file_path):
+def load_and_process_xml(file_path: str) -> list[str | None]:
     # Opening and parsing the XML file
     try:
         tree = ET.parse(file_path)
@@ -16,12 +16,9 @@ def load_and_process_xml(file_path):
 
         # Processing all <d:entry> elements to ensure they have a non-empty d:title attribute
         for entry in root.findall(".//d:entry", namespaces=namespaces):
-            title = entry.get(
-                "{http://www.apple.com/DTDs/DictionaryService-1.0.rng}title"
-            )
-            if (
-                title is not None and title.strip()
-            ):  # Check if title exists and is not just whitespace
+            title = entry.get("{http://www.apple.com/DTDs/DictionaryService-1.0.rng}title")
+            # Check if title exists and is not just whitespace
+            if (title is not None and title.strip()):
                 entry_string = ET.tostring(entry, encoding="unicode")
                 dictionary_entries.append(entry_string)
 
@@ -66,12 +63,12 @@ def convert_to_markdown(elem, depth=0):
         markdown = f"**{text.strip()}** " + markdown
     # newline after
     elif (
-        "hg" in class_attr
-        or "sg" in class_attr
-        or "eg" in class_attr
-        or "x_xdh" in class_attr
-        or "t_derivatives" in class_attr
-        or "se1" in class_attr
+            "hg" in class_attr
+            or "sg" in class_attr
+            or "eg" in class_attr
+            or "x_xdh" in class_attr
+            or "t_derivatives" in class_attr
+            or "se1" in class_attr
     ):
         markdown = markdown + f"\n\n"
     # italic text
@@ -98,7 +95,7 @@ def convert_to_markdown(elem, depth=0):
     return markdown
 
 
-def save_entry_to_md(entry_xml):
+def save_entry_to_md(entry_xml: str):
     try:
         # Parse the entry XML string
         entry: xml.etree.ElementTree = ET.fromstring(entry_xml)
@@ -118,7 +115,7 @@ def save_entry_to_md(entry_xml):
 
         # Clean title to create a valid filename
         filename = (
-            title.strip().replace("/", "_").replace("\\", "_").replace(":", "_") + ".md"
+                title.strip().replace("/", "_").replace("\\", "_").replace(":", "_") + ".md"
         )
 
         # Create and write to a Markdown file
