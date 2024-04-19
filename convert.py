@@ -45,13 +45,14 @@ def convert_to_markdown(elem, depth=0):
     # Check for class attributes/classes or specific tags
     tag = elem.tag
     class_attr = elem.get("class", "").split(" ")
-    text = elem.text if elem.text != None else ""
-    tail_text = elem.tail if elem.tail != None and depth > 0 else ""
+    text = elem.text if elem.text is not None else ""
+    tail_text = elem.tail if elem.tail is not None and depth > 0 else ""
 
     print(tag, class_attr, text, tail_text)
 
     # markdown is the content of child elements
     # text is the content of the current element
+    # in each element, content is organized, allegedly, text + markdown(from children) + tail_text
 
     # Apply Markdown based on class or tag
     # number bullet
