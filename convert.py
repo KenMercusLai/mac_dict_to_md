@@ -139,5 +139,5 @@ dictionary_contents = load_and_process_xml(file_path)
 
 # Output the results
 print(f"Number of entries: {len(dictionary_contents)}")
-for content in dictionary_contents[10000:10020]:
+for content in dictionary_contents:
     save_entry_to_md(content)
