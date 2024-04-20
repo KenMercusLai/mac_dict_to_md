@@ -58,75 +58,40 @@ def convert_to_markdown(elem, depth=0):
     class_attr = elem.get("class", "").split(" ")
     text = elem.text if elem.text is not None else ""
     tail_text = elem.tail if elem.tail is not None and depth > 0 else ""
-
     print(tag, class_attr, text, tail_text)
 
     # markdown is the content of child elements
     # text is the content of the current element
     # in each element, content is organized, allegedly, text + markdown(from children) + tail_text
 
-    # Apply Markdown based on class or tag
-    # number bullet
-    # if len(set(class_attr).intersection(["gp", "x_xdh", "sn", "ty_label"])) == 4:
-    #     markdown = f"{text.strip()}. " + markdown
-    # # strip and bold
-    # elif "v" in class_attr:
-    #     markdown = f"**{text.strip()}**" + markdown
-    # # strip, bold and a space after
-    # elif "hw" in class_attr or "l" in class_attr:
-    #     markdown = f"**{text.strip()}** " + markdown
-    # # newline after
-    # elif (
-    #     "hg" in class_attr
-    #     or "sg" in class_attr
-    #     or "eg" in class_attr
-    #     or "x_xdh" in class_attr
-    #     or "t_derivatives" in class_attr
-    #     or "se1" in class_attr
-    # ):
-    #     markdown += "\n\n"
-    # # italic text
-    # elif "ex" in class_attr and text.strip() != "":
-    #     markdown = f"*{text.strip()}*" + markdown
-    # elif "ex" in class_attr and text.strip() == "":
-    #     markdown = f"*{markdown}*"
-    # # internal link to other entries
-    # elif tag == "{http://www.w3.org/1999/xhtml}a":
-    #     markdown = f"[[{text}]]" + markdown
-    # # bullet point
-    # elif "sn" in class_attr:
-    #     print(text)
-    #     markdown = "\n\n- " + markdown
-    # # text and new line after
-    # elif "ty_label" in class_attr:
-    #     markdown = markdown + f"{text}\n\n"
-    # else:
-    #     markdown = text + markdown
-
-    # # Append tail text if there is any, but not if this is the root element
-    # markdown += tail_text
-
-    # example
-    if "ex" in class_attr:
-        markdown = f"*{text + markdown + tail_text}*"
+    # italic
+    if "ex" in class_attr or "ge" in class_attr or "reg" in class_attr:
+        markdown = f"*{(text + markdown + tail_text).strip()}* "
+    # internal link
+    elif tag == "{http://www.w3.org/1999/xhtml}a":
+        markdown = f"[[{(text + markdown + tail_text).strip()}]]"
+    # bold
+    elif "l" in class_attr:
+        markdown = f"**{(text + markdown + tail_text).strip()}** "
     # section
     else:
-        # Pattern to match
-        pattern = r"^x_x([a-zA-Z][a-zA-Z\d]*?)(\d*)$"
-        # Find matching item
-        matched_item, matched_section = find_matching_item(class_attr, pattern)
-
         markdown = text + markdown + tail_text
-        if matched_item:
-            (matched_section_type, matched_section_indent) = matched_section.groups()
-            print(
-                f"Matching item: {matched_item}, matched: {matched_section_type, matched_section_indent}"
-            )
-            if matched_section_indent is not None:
-                # defintion header but not serial number (bullet)
-                markdown = markdown + "\n\n"
-        else:
-            print("No matching item found.")
+
+    # Pattern to match
+    pattern = r"^x_x([a-zA-Z][a-zA-Z\d]*?)(\d*)$"
+    # Find matching item
+    matched_item, matched_section = find_matching_item(class_attr, pattern)
+
+    if matched_item:
+        (matched_section_type, matched_section_indent) = matched_section.groups()
+        print(
+            f"Matching item: {matched_item}, matched: {matched_section_type, matched_section_indent}"
+        )
+        if matched_section_indent is not None and "sn" not in class_attr:
+            # not serial number (bullet)
+            markdown = markdown + "\n\n"
+    else:
+        print("No matching item found.")
 
     return markdown
 
