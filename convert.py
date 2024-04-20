@@ -1,7 +1,7 @@
-from typing import List
-import xml
 import re
+import xml
 import xml.etree.ElementTree as ET
+from typing import List
 
 
 def load_and_process_xml(file_path: str) -> list[str | None]:
