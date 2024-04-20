@@ -58,7 +58,6 @@ def convert_to_markdown(elem, depth=0):
     class_attr = elem.get("class", "").split(" ")
     text = elem.text if elem.text is not None else ""
     tail_text = elem.tail if elem.tail is not None and depth > 0 else ""
-    print(tag, class_attr, text, tail_text)
 
     # markdown is the content of child elements
     # text is the content of the current element
@@ -73,25 +72,19 @@ def convert_to_markdown(elem, depth=0):
     # bold
     elif "l" in class_attr:
         markdown = f"**{(text + markdown + tail_text).strip()}** "
-    # section
     else:
         markdown = text + markdown + tail_text
 
+    # section
     # Pattern to match
     pattern = r"^x_x([a-zA-Z][a-zA-Z\d]*?)(\d*)$"
     # Find matching item
     matched_item, matched_section = find_matching_item(class_attr, pattern)
-
     if matched_item:
         (matched_section_type, matched_section_indent) = matched_section.groups()
-        print(
-            f"Matching item: {matched_item}, matched: {matched_section_type, matched_section_indent}"
-        )
         if matched_section_indent is not None and "sn" not in class_attr:
             # not serial number (bullet)
             markdown = markdown + "\n\n"
-    else:
-        print("No matching item found.")
 
     return markdown
 
@@ -100,12 +93,6 @@ def save_entry_to_md(entry_xml: str):
     try:
         # Parse the entry XML string
         entry: xml.etree.ElementTree = ET.fromstring(entry_xml)
-
-        # Define the namespace map
-        namespaces = {
-            "html": "http://www.w3.org/1999/xhtml",
-            "ns0": "http://www.apple.com/DTDs/DictionaryService-1.0.rng",
-        }
 
         # Extract the title attribute for use as the filename
         title = entry.get("{http://www.apple.com/DTDs/DictionaryService-1.0.rng}title")
@@ -118,6 +105,7 @@ def save_entry_to_md(entry_xml: str):
         filename = (
             title.strip().replace("/", "_").replace("\\", "_").replace(":", "_") + ".md"
         )
+        print(f"Creating file '{filename}'...")
 
         # Create and write to a Markdown file
         with open(filename, "w", encoding="utf-8") as file:
