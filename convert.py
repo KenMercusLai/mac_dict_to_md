@@ -1,4 +1,6 @@
+from typing import List
 import xml
+import re
 import xml.etree.ElementTree as ET
 
 
@@ -16,9 +18,11 @@ def load_and_process_xml(file_path: str) -> list[str | None]:
 
         # Processing all <d:entry> elements to ensure they have a non-empty d:title attribute
         for entry in root.findall(".//d:entry", namespaces=namespaces):
-            title = entry.get("{http://www.apple.com/DTDs/DictionaryService-1.0.rng}title")
+            title = entry.get(
+                "{http://www.apple.com/DTDs/DictionaryService-1.0.rng}title"
+            )
             # Check if title exists and is not just whitespace
-            if (title is not None and title.strip()):
+            if title is not None and title.strip():
                 entry_string = ET.tostring(entry, encoding="unicode")
                 dictionary_entries.append(entry_string)
 
@@ -28,6 +32,16 @@ def load_and_process_xml(file_path: str) -> list[str | None]:
     except Exception as e:
         print(f"An error occurred: {e}")
         return []
+
+
+def find_matching_item(
+    items: List, pattern: str
+) -> tuple[str, re.Match] | tuple[None, None]:
+    """Search for an item in the list that matches the given regex pattern and return it."""
+    for item in items:
+        if matched := re.match(pattern, item):
+            return item, matched
+    return tuple([None, None])
 
 
 def convert_to_markdown(elem, depth=0):
@@ -53,44 +67,66 @@ def convert_to_markdown(elem, depth=0):
 
     # Apply Markdown based on class or tag
     # number bullet
-    if len(set(class_attr).intersection(["gp", "x_xdh", "sn", "ty_label"])) == 4:
-        markdown = f"{text.strip()}. " + markdown
-    # strip and bold
-    elif "v" in class_attr:
-        markdown = f"**{text.strip()}**" + markdown
-    # strip, bold and a space after
-    elif "hw" in class_attr or "l" in class_attr:
-        markdown = f"**{text.strip()}** " + markdown
-    # newline after
-    elif (
-            "hg" in class_attr
-            or "sg" in class_attr
-            or "eg" in class_attr
-            or "x_xdh" in class_attr
-            or "t_derivatives" in class_attr
-            or "se1" in class_attr
-    ):
-        markdown = markdown + f"\n\n"
-    # italic text
-    elif "ex" in class_attr and text.strip() != "":
-        markdown = f"*{text.strip()}*" + markdown
-    elif "ex" in class_attr and text.strip() == "":
-        markdown = f"*{markdown}*"
-    # internal link to other entries
-    elif tag == "{http://www.w3.org/1999/xhtml}a":
-        markdown = f"[[{text}]]" + markdown
-    # bullet point
-    elif "sn" in class_attr:
-        print(text)
-        markdown = f"\n\n- " + markdown
-    # text and new line after
-    elif "ty_label" in class_attr:
-        markdown = markdown + f"{text}\n\n"
-    else:
-        markdown = text + markdown
+    # if len(set(class_attr).intersection(["gp", "x_xdh", "sn", "ty_label"])) == 4:
+    #     markdown = f"{text.strip()}. " + markdown
+    # # strip and bold
+    # elif "v" in class_attr:
+    #     markdown = f"**{text.strip()}**" + markdown
+    # # strip, bold and a space after
+    # elif "hw" in class_attr or "l" in class_attr:
+    #     markdown = f"**{text.strip()}** " + markdown
+    # # newline after
+    # elif (
+    #     "hg" in class_attr
+    #     or "sg" in class_attr
+    #     or "eg" in class_attr
+    #     or "x_xdh" in class_attr
+    #     or "t_derivatives" in class_attr
+    #     or "se1" in class_attr
+    # ):
+    #     markdown += "\n\n"
+    # # italic text
+    # elif "ex" in class_attr and text.strip() != "":
+    #     markdown = f"*{text.strip()}*" + markdown
+    # elif "ex" in class_attr and text.strip() == "":
+    #     markdown = f"*{markdown}*"
+    # # internal link to other entries
+    # elif tag == "{http://www.w3.org/1999/xhtml}a":
+    #     markdown = f"[[{text}]]" + markdown
+    # # bullet point
+    # elif "sn" in class_attr:
+    #     print(text)
+    #     markdown = "\n\n- " + markdown
+    # # text and new line after
+    # elif "ty_label" in class_attr:
+    #     markdown = markdown + f"{text}\n\n"
+    # else:
+    #     markdown = text + markdown
 
-    # Append tail text if there is any, but not if this is the root element
-    markdown += tail_text
+    # # Append tail text if there is any, but not if this is the root element
+    # markdown += tail_text
+
+    # example
+    if "ex" in class_attr:
+        markdown = f"*{text + markdown + tail_text}*"
+    # section
+    else:
+        # Pattern to match
+        pattern = r"^x_x([a-zA-Z][a-zA-Z\d]*?)(\d*)$"
+        # Find matching item
+        matched_item, matched_section = find_matching_item(class_attr, pattern)
+
+        markdown = text + markdown + tail_text
+        if matched_item:
+            (matched_section_type, matched_section_indent) = matched_section.groups()
+            print(
+                f"Matching item: {matched_item}, matched: {matched_section_type, matched_section_indent}"
+            )
+            if matched_section_indent is not None:
+                # defintion header but not serial number (bullet)
+                markdown = markdown + "\n\n"
+        else:
+            print("No matching item found.")
 
     return markdown
 
@@ -115,7 +151,7 @@ def save_entry_to_md(entry_xml: str):
 
         # Clean title to create a valid filename
         filename = (
-                title.strip().replace("/", "_").replace("\\", "_").replace(":", "_") + ".md"
+            title.strip().replace("/", "_").replace("\\", "_").replace(":", "_") + ".md"
         )
 
         # Create and write to a Markdown file
