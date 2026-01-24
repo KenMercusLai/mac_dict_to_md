@@ -70,6 +70,7 @@ HANDLED_CLASSES = {
     "tx",
     "q",
     "subEnt",
+    "sup",
     # Fractions
     "frac",
     "nu",
@@ -333,6 +334,18 @@ def format_inline_content(elem: Element) -> str:
             text = normalize_whitespace(format_inline_content(child))
             if text:
                 result.append(f"**{text}**")
+
+        # sup (superscript) - convert to superscript
+        # Strip surrounding whitespace to keep compact
+        elif "sup" in classes:
+            if result and result[-1].endswith((" ", "\n", "\t")):
+                result[-1] = result[-1].rstrip()
+            text = normalize_whitespace(get_all_text(child))
+            superscript_text = "".join(SUPERSCRIPT.get(c, c) for c in text)
+            result.append(superscript_text)
+            if child.tail:
+                result.append(child.tail.lstrip())
+            continue
 
         # subEnt (subscript, e.g., chemical formulas) - convert to subscript
         # Strip surrounding whitespace to keep formulas compact (C₁₁H₁₈ not C ₁₁ H ₁₈)
