@@ -69,6 +69,7 @@ HANDLED_CLASSES = {
     "work",
     "tx",
     "q",
+    "subEnt",
     # Fractions
     "frac",
     "nu",
@@ -332,6 +333,12 @@ def format_inline_content(elem: Element) -> str:
             text = normalize_whitespace(format_inline_content(child))
             if text:
                 result.append(f"**{text}**")
+
+        # subEnt (subscript, e.g., chemical formulas) - convert to subscript
+        elif "subEnt" in classes:
+            text = normalize_whitespace(get_all_text(child))
+            subscript_text = "".join(SUBSCRIPT.get(c, c) for c in text)
+            result.append(subscript_text)
 
         # Register label (historical, etc) - italic
         elif "reg" in classes:
