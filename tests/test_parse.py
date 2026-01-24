@@ -661,6 +661,60 @@ class TestFormatPosBlock:
         assert "*example one*" in def_line
         assert "*example two*" in def_line
 
+    def test_with_inflection_group(self):
+        """Test that inflection group (plural form) is included after POS."""
+        xml = """
+        <span class="se1">
+            <span class="posg">
+                <span class="pos">noun</span>
+                <span class="infg">
+                    <span class="gp tg_infg">(</span>
+                    <span class="sy">plural</span>
+                    <span class="inf">maculae</span>
+                    <span class="prx">| ˈmækjəˌli |</span>
+                    <span class="gp tg_infg">)</span>
+                </span>
+            </span>
+            <span class="msDict">
+                <span class="df">a spot or mark</span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_pos_block(elem)
+        # POS line should include noun and the inflection group
+        assert "**noun**" in result
+        assert "*plural*" in result
+        assert "maculae" in result
+        assert "ˈmækjəˌli" in result
+        # Should have opening/closing parens
+        assert "(" in result
+        assert ")" in result
+
+    def test_with_inflection_group_no_pronunciation(self):
+        """Test inflection group without pronunciation."""
+        xml = """
+        <span class="se1">
+            <span class="posg">
+                <span class="pos">noun</span>
+                <span class="infg">
+                    <span class="gp tg_infg">(</span>
+                    <span class="sy">plural</span>
+                    <span class="inf">cacti</span>
+                    <span class="gp tg_infg">)</span>
+                </span>
+            </span>
+            <span class="msDict">
+                <span class="df">a succulent plant</span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_pos_block(elem)
+        assert "**noun**" in result
+        assert "*plural*" in result
+        assert "cacti" in result
+
 
 class TestFormatSubentryContent:
     """Tests for format_subentry_content function."""
@@ -1396,6 +1450,22 @@ class TestTrackElement:
         elem = ET.fromstring(xml)
         parse.track_element(elem)
         assert "vg" not in parse.unhandled_classes
+
+    def test_infg_class_is_handled(self):
+        """Test that infg (inflection group) class is recognized as handled."""
+        parse.unhandled_classes.clear()
+        xml = '<span class="infg">(plural maculae)</span>'
+        elem = ET.fromstring(xml)
+        parse.track_element(elem)
+        assert "infg" not in parse.unhandled_classes
+
+    def test_inf_class_is_handled(self):
+        """Test that inf (inflected form) class is recognized as handled."""
+        parse.unhandled_classes.clear()
+        xml = '<span class="inf">maculae</span>'
+        elem = ET.fromstring(xml)
+        parse.track_element(elem)
+        assert "inf" not in parse.unhandled_classes
 
 
 class TestReportUnhandled:

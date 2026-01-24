@@ -117,6 +117,8 @@ HANDLED_CLASSES = {
     "xrlabel",
     "v",     # variant word (inside vg)
     "vg",    # variant group
+    "infg",  # inflection group (e.g., plural forms)
+    "inf",   # inflected form (e.g., the plural word itself)
 }
 
 # Superscript mapping for homograph numbers and fractions
@@ -628,6 +630,15 @@ def format_pos_block(se1_elem: Element) -> str:
         pos_text = normalize_whitespace(get_all_text(pos_elem))
         if pos_text:
             pos_line_parts.append(f"**{pos_text}**")
+
+    # Inflection group (e.g., plural forms) - inside posg
+    posg_elem = find_first_by_class(se1_elem, "posg")
+    if posg_elem is not None:
+        infg_elem = find_first_by_class(posg_elem, "infg", direct_only=True)
+        if infg_elem is not None:
+            infg_text = normalize_whitespace(format_inline_content(infg_elem))
+            if infg_text:
+                pos_line_parts.append(infg_text)
 
     # Grammar info [with object]
     gg_elem = find_first_by_class(se1_elem, "gg")
