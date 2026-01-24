@@ -577,6 +577,14 @@ def format_sense(se2_elem: Element, is_subsense: bool = False) -> str:
                 df_text = normalize_whitespace(format_inline_content(df_elem))
                 main_content.append(df_text)
 
+            # Cross-reference group (e.g., "another term for X") - used when no df
+            if df_elem is None:
+                xrg_elem = find_first_by_class(msdict, "xrg", direct_only=True)
+                if xrg_elem is not None:
+                    xrg_text = normalize_whitespace(format_inline_content(xrg_elem))
+                    if xrg_text:
+                        main_content.append(xrg_text)
+
             # Examples in this msDict (direct children only)
             for eg_elem in msdict:
                 if has_class(eg_elem, "eg"):

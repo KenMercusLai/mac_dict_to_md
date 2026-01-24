@@ -581,6 +581,27 @@ class TestFormatSense:
         result = parse.format_sense(elem)
         assert "  - " in result
 
+    def test_cross_reference_sense(self):
+        """Test sense with xrg (cross-reference) instead of df (definition)."""
+        xml = """
+        <span class="se2">
+            <span class="sn">2</span>
+            <span class="msDict">
+                <span class="xrg">
+                    another term for
+                    <span class="xr">
+                        <a title="macule">macule</a>
+                    </span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_sense(elem)
+        assert "2 " in result
+        assert "another term for" in result
+        assert "[macule](macule.md)" in result
+
 
 class TestFormatSubsense:
     """Tests for format_subsense function."""
