@@ -96,7 +96,6 @@ HANDLED_CLASSES = {
     "t_phrases",
     "t_phrasalVerbs",
     "t_derivatives",
-    "ty_hom",
     "ty_label",
     "x_xh0",
     "x_xd0",
@@ -114,6 +113,8 @@ HANDLED_CLASSES = {
     "x_blk",
     "xr",
     "xrg",
+    "xrlabelGroup",
+    "xrlabel",
     "v",     # variant word (inside vg)
     "vg",    # variant group
 }
@@ -351,6 +352,17 @@ def format_inline_content(elem: Element) -> str:
         # sup (superscript) - convert to superscript
         # Strip surrounding whitespace to keep compact
         elif "sup" in classes:
+            if result and result[-1].endswith((" ", "\n", "\t")):
+                result[-1] = result[-1].rstrip()
+            text = normalize_whitespace(get_all_text(child))
+            superscript_text = "".join(SUPERSCRIPT.get(c, c) for c in text)
+            result.append(superscript_text)
+            if child.tail:
+                result.append(child.tail.lstrip())
+            continue
+
+        # ty_hom (homograph number) - convert to superscript
+        elif "ty_hom" in classes:
             if result and result[-1].endswith((" ", "\n", "\t")):
                 result[-1] = result[-1].rstrip()
             text = normalize_whitespace(get_all_text(child))

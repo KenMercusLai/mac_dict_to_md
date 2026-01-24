@@ -319,6 +319,20 @@ class TestFormatInlineContent:
         result = parse.format_inline_content(elem)
         assert "₂" in result
 
+    def test_ty_hom_converts_to_superscript(self):
+        """Test that ty_hom class converts numbers to superscript."""
+        xml = '<span><span class="gp ty_hom tg_xr">2</span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "²" in result
+
+    def test_ty_hom_strips_surrounding_whitespace(self):
+        """Test that ty_hom strips whitespace around the number."""
+        xml = '<span>word <span class="ty_hom"> 1 </span> more</span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "word¹" in result
+
     def test_link_with_title(self):
         xml = '<span><a title="target">link text</a></span>'
         elem = ET.fromstring(xml)
@@ -426,6 +440,42 @@ class TestFormatInlineContent:
     def test_xrg_class_no_special_formatting(self):
         """Test that xrg class does not apply any special formatting."""
         xml = '<span><span class="xrg">plain text</span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert result.strip() == "plain text"
+        assert "**" not in result
+        assert "*plain text*" not in result
+
+    def test_xrlabelGroup_class_ignored_preserves_content(self):
+        """Test that xrlabelGroup class is ignored but content is preserved."""
+        xml = '<span>before <span class="xrlabelGroup">label group</span> after</span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "label group" in result
+        assert "before" in result
+        assert "after" in result
+
+    def test_xrlabelGroup_class_no_special_formatting(self):
+        """Test that xrlabelGroup class does not apply any special formatting."""
+        xml = '<span><span class="xrlabelGroup">plain text</span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert result.strip() == "plain text"
+        assert "**" not in result
+        assert "*plain text*" not in result
+
+    def test_xrlabel_class_ignored_preserves_content(self):
+        """Test that xrlabel class is ignored but content is preserved."""
+        xml = '<span>before <span class="xrlabel">label</span> after</span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "label" in result
+        assert "before" in result
+        assert "after" in result
+
+    def test_xrlabel_class_no_special_formatting(self):
+        """Test that xrlabel class does not apply any special formatting."""
+        xml = '<span><span class="xrlabel">plain text</span></span>'
         elem = ET.fromstring(xml)
         result = parse.format_inline_content(elem)
         assert result.strip() == "plain text"
@@ -1314,6 +1364,22 @@ class TestTrackElement:
         elem = ET.fromstring(xml)
         parse.track_element(elem)
         assert "xrg" not in parse.unhandled_classes
+
+    def test_xrlabelGroup_class_is_handled(self):
+        """Test that xrlabelGroup class is recognized as handled."""
+        parse.unhandled_classes.clear()
+        xml = '<span class="xrlabelGroup">label group</span>'
+        elem = ET.fromstring(xml)
+        parse.track_element(elem)
+        assert "xrlabelGroup" not in parse.unhandled_classes
+
+    def test_xrlabel_class_is_handled(self):
+        """Test that xrlabel class is recognized as handled."""
+        parse.unhandled_classes.clear()
+        xml = '<span class="xrlabel">label</span>'
+        elem = ET.fromstring(xml)
+        parse.track_element(elem)
+        assert "xrlabel" not in parse.unhandled_classes
 
     def test_v_class_is_handled(self):
         """Test that v (variant word) class is recognized as handled."""
