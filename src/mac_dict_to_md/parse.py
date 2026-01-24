@@ -111,6 +111,7 @@ HANDLED_CLASSES = {
     "x_xoLblBlk",
     "hasSn",
     "entry",
+    "x_blk",
 }
 
 # Superscript mapping for homograph numbers and fractions
@@ -428,6 +429,10 @@ def format_inline_content(elem: Element) -> str:
         # Default: recurse
         else:
             result.append(format_inline_content(child))
+
+        # x_blk: content occupies own line - add newline after element content
+        if "x_blk" in classes:
+            result.append("\n")
 
         # Append tail text
         if child.tail:
@@ -872,10 +877,27 @@ def format_origin_section(etym_elem: Element) -> str:
 
 def format_note(note_elem: Element) -> str:
     """Format a note element as a markdown blockquote."""
-    parts = []
-
-    # Check for label (e.g., "USAGE")
+    # Check for label with x_blk (content occupies own line)
     lbl_elem = find_first_by_class(note_elem, "lbl")
+    if lbl_elem is not None and has_class(lbl_elem, "x_blk"):
+        lbl_text = normalize_whitespace(get_all_text(lbl_elem)).strip()
+        # Get raw content with newline preserved
+        raw_content = format_inline_content(note_elem)
+        if lbl_text:
+            # Find the lbl content and the x_blk newline after it
+            lbl_idx = raw_content.find(lbl_text)
+            if lbl_idx != -1:
+                after_lbl = raw_content[lbl_idx + len(lbl_text) :]
+                if after_lbl.startswith("\n"):
+                    # Found the x_blk newline
+                    rest = normalize_whitespace(after_lbl[1:]).strip()
+                    lines = [f"> **{lbl_text}**"]
+                    if rest:
+                        lines.append(f"> {rest}")
+                    return "\n".join(lines)
+
+    # Standard handling for notes without x_blk
+    parts = []
     if lbl_elem is not None:
         lbl_text = normalize_whitespace(get_all_text(lbl_elem)).strip()
         if lbl_text:

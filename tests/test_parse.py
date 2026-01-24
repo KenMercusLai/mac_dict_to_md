@@ -366,6 +366,29 @@ class TestFormatInlineContent:
         result = parse.format_inline_content(elem)
         assert "[no object]" in result
 
+    def test_x_blk_occupies_own_line(self):
+        """Test that x_blk class causes content to occupy its own line."""
+        xml = '<span><span class="lbl x_blk">USAGE</span> Some note text.</span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "USAGE\n" in result
+        assert "Some note text." in result
+
+    def test_x_blk_with_bold_content(self):
+        """Test x_blk works with subsequent bold elements."""
+        xml = '<span><span class="x_blk">Header</span><span class="bold">Bold text</span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "Header\n" in result
+        assert "**Bold text**" in result
+
+    def test_x_blk_standalone(self):
+        """Test x_blk element alone."""
+        xml = '<span><span class="x_blk">Standalone</span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "Standalone\n" in result
+
 
 # ============================================================================
 # Section Formatting Tests
@@ -964,6 +987,23 @@ class TestFormatNote:
         result = parse.format_note(elem)
         assert "> " in result
         assert "Just a note." in result
+
+    def test_with_x_blk_label(self):
+        """Test note with lbl x_blk class - content on separate lines."""
+        xml = """
+        <span class="note">
+            <span class="lbl x_blk">USAGE</span>
+            This is a usage note.
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_note(elem)
+        # Should have two blockquote lines
+        lines = result.split("\n")
+        assert len(lines) == 2
+        assert lines[0] == "> **USAGE**"
+        assert lines[1].startswith("> ")
+        assert "This is a usage note." in lines[1]
 
 
 # ============================================================================
