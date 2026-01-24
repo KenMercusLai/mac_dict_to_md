@@ -13,9 +13,12 @@ from typing import Iterator
 from xml.etree.ElementTree import Element
 
 
-# Tracking for unhandled patterns
-unhandled_tags: set[str] = set()
-unhandled_classes: set[str] = set()
+# Tracking for unhandled patterns with examples: pattern -> (source_file, xml_snippet)
+unhandled_tags: dict[str, tuple[str, str]] = {}
+unhandled_classes: dict[str, tuple[str, str]] = {}
+
+# Current source file being processed (for tracking)
+_current_source_file: str = ""
 
 # Known tags that we handle
 KNOWN_TAGS = {
@@ -123,14 +126,17 @@ def clean_punctuation(text: str) -> str:
 
 
 def track_element(elem: Element) -> None:
-    """Track unhandled tags and classes for reporting."""
+    """Track unhandled tags and classes with example snippets."""
     tag = elem.tag
-    if tag not in KNOWN_TAGS:
-        unhandled_tags.add(tag)
+    if tag not in KNOWN_TAGS and tag not in unhandled_tags:
+        # Store first occurrence with XML snippet (truncated to 300 chars)
+        snippet = ET.tostring(elem, encoding='unicode')[:300]
+        unhandled_tags[tag] = (_current_source_file, snippet)
 
     for cls in get_class(elem):
-        if cls not in HANDLED_CLASSES and not cls.startswith('tg_'):
-            unhandled_classes.add(cls)
+        if cls not in HANDLED_CLASSES and not cls.startswith('tg_') and cls not in unhandled_classes:
+            snippet = ET.tostring(elem, encoding='unicode')[:300]
+            unhandled_classes[cls] = (_current_source_file, snippet)
 
 
 def format_inline_content(elem: Element) -> str:
@@ -487,6 +493,9 @@ def xml_to_markdown(root: Element) -> str:
 
 def process_file(xml_path: Path) -> Path:
     """Process a single XML file and create corresponding MD file."""
+    global _current_source_file
+    _current_source_file = xml_path.name
+
     content = xml_path.read_text(encoding='utf-8')
     root = ET.fromstring(content)
 
@@ -517,13 +526,51 @@ def process_directory(dir_path: Path) -> int:
 
 
 def report_unhandled() -> str:
-    """Generate report of unhandled patterns."""
+    """Generate brief summary of unhandled patterns."""
     report = []
     if unhandled_tags:
-        report.append(f'Unhandled tags: {sorted(unhandled_tags)}')
+        report.append(f'Unhandled tags ({len(unhandled_tags)}): {sorted(unhandled_tags.keys())}')
     if unhandled_classes:
-        report.append(f'Unhandled classes: {sorted(unhandled_classes)}')
+        report.append(f'Unhandled classes ({len(unhandled_classes)}): {sorted(unhandled_classes.keys())}')
     return '\n'.join(report) if report else 'All patterns handled.'
+
+
+def save_unhandled_report(output_path: Path) -> None:
+    """Save detailed unhandled patterns report to file with examples."""
+    lines = ['# Unhandled Patterns Report', '']
+
+    if not unhandled_tags and not unhandled_classes:
+        lines.append('All patterns handled - no unhandled tags or classes found.')
+        output_path.write_text('\n'.join(lines), encoding='utf-8')
+        return
+
+    if unhandled_tags:
+        lines.append('## Unhandled Tags')
+        lines.append('')
+        for tag in sorted(unhandled_tags.keys()):
+            filename, snippet = unhandled_tags[tag]
+            lines.append(f'### `{tag}`')
+            lines.append(f'**Source:** `{filename}`')
+            lines.append('')
+            lines.append('```xml')
+            lines.append(snippet)
+            lines.append('```')
+            lines.append('')
+
+    if unhandled_classes:
+        lines.append('## Unhandled Classes')
+        lines.append('')
+        for cls in sorted(unhandled_classes.keys()):
+            filename, snippet = unhandled_classes[cls]
+            lines.append(f'### `{cls}`')
+            lines.append(f'**Source:** `{filename}`')
+            lines.append('')
+            lines.append('```xml')
+            lines.append(snippet)
+            lines.append('```')
+            lines.append('')
+
+    output_path.write_text('\n'.join(lines), encoding='utf-8')
 
 
 def main() -> int:
@@ -541,8 +588,15 @@ def main() -> int:
     print(f'Processing XML files in {dir_path}...')
     count = process_directory(dir_path)
     print(f'Done. Processed {count} files.')
+
+    # Save detailed report to file
+    report_path = dir_path / 'unhandled_report.md'
+    save_unhandled_report(report_path)
+    print(f'Unhandled patterns report saved to: {report_path}')
+
+    # Print brief summary
     print()
-    print('--- Unhandled Pattern Report ---')
+    print('--- Unhandled Pattern Summary ---')
     print(report_unhandled())
 
     return 0
