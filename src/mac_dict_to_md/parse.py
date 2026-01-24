@@ -632,6 +632,150 @@ def format_pos_block(se1_elem: Element) -> str:
     return "\n".join(lines)
 
 
+def format_subentry_content(subentry: Element) -> list[str]:
+    """Format content within a subentry, handling se2 numbered senses and/or direct msDicts.
+
+    Returns a list of formatted lines.
+    """
+    lines: list[str] = []
+
+    # Check for se2 numbered senses first
+    se2_elems = find_by_class(subentry, "se2", direct_only=True)
+
+    if se2_elems:
+        # Has numbered senses (1, 2, 3, etc.)
+        for se2_elem in se2_elems:
+            se2_lines = format_subentry_sense(se2_elem)
+            lines.extend(se2_lines)
+    else:
+        # No numbered senses - process direct msDict elements
+        msdicts = find_by_class(subentry, "msDict", direct_only=True)
+        for i, msdict in enumerate(msdicts):
+            classes = get_class(msdict)
+            if "t_subsense" in classes:
+                # Subsense
+                subsense_text = format_subentry_msdict(msdict, is_subsense=True)
+                if subsense_text:
+                    lines.append(subsense_text)
+            else:
+                # Main definition
+                main_text = format_subentry_msdict(msdict, is_subsense=False)
+                if main_text:
+                    lines.append(main_text)
+
+    return lines
+
+
+def format_subentry_sense(se2_elem: Element) -> list[str]:
+    """Format a single se2 numbered sense within a subentry.
+
+    Returns a list of formatted lines.
+    """
+    lines: list[str] = []
+
+    # Get sense number
+    sn_text = ""
+    for child in se2_elem:
+        if has_class(child, "sn") or has_class(child, "tg_se2"):
+            text = get_all_text(child).strip()
+            if text and text.isdigit():
+                sn_text = text
+                break
+        # Also check the x_xoh header for sense number
+        if has_class(child, "x_xoh"):
+            for inner in child:
+                if has_class(inner, "tg_se2") or has_class(inner, "sn"):
+                    text = get_all_text(inner).strip()
+                    if text and text.isdigit():
+                        sn_text = text
+                        break
+
+    # Get form group (fg) if present at se2 level
+    fg_text = ""
+    for child in se2_elem:
+        if has_class(child, "fg"):
+            fg_text = normalize_whitespace(format_inline_content(child))
+            break
+        # Also check x_xoh header for fg
+        if has_class(child, "x_xoh"):
+            fg_elem = find_first_by_class(child, "fg")
+            if fg_elem is not None:
+                fg_text = normalize_whitespace(format_inline_content(fg_elem))
+                break
+
+    # Process msDict elements within this sense
+    msdicts = find_by_class(se2_elem, "msDict", direct_only=True)
+    first_main = True
+    for msdict in msdicts:
+        classes = get_class(msdict)
+        if "t_subsense" in classes:
+            # Subsense
+            subsense_text = format_subentry_msdict(msdict, is_subsense=True)
+            if subsense_text:
+                lines.append(subsense_text)
+        else:
+            # Main definition for this sense
+            main_text = format_subentry_msdict(msdict, is_subsense=False)
+            if main_text:
+                if first_main and sn_text:
+                    # Add sense number and optional form group
+                    prefix = f"{sn_text} "
+                    if fg_text:
+                        prefix += f"{fg_text} "
+                    lines.append(prefix + main_text)
+                    first_main = False
+                else:
+                    lines.append(main_text)
+
+    return lines
+
+
+def format_subentry_msdict(msdict_elem: Element, is_subsense: bool = False) -> str:
+    """Format a single msDict element from a subentry.
+
+    Args:
+        msdict_elem: The msDict element to format
+        is_subsense: Whether this is a subsense (bullet point)
+
+    Returns:
+        Formatted string for the definition.
+    """
+    parts: list[str] = []
+
+    # Form group (fg) within this msDict
+    fg_elem = find_first_by_class(msdict_elem, "fg", direct_only=True)
+    if fg_elem is not None:
+        fg_text = normalize_whitespace(format_inline_content(fg_elem))
+        if fg_text:
+            parts.append(fg_text)
+
+    # Label group (lg)
+    lg_elem = find_first_by_class(msdict_elem, "lg", direct_only=True)
+    if lg_elem is not None:
+        lg_text = normalize_whitespace(format_inline_content(lg_elem))
+        if lg_text:
+            parts.append(lg_text)
+
+    # Definition
+    df_elem = find_first_by_class(msdict_elem, "df", direct_only=True)
+    if df_elem is not None:
+        df_text = normalize_whitespace(format_inline_content(df_elem))
+        if df_text:
+            parts.append(df_text)
+
+    # Examples
+    for child in msdict_elem:
+        if has_class(child, "eg"):
+            eg_text = format_example_group(child)
+            if eg_text:
+                parts.append(eg_text)
+
+    result = " ".join(parts)
+    if result and is_subsense:
+        return "  - " + result
+    return result
+
+
 def format_phrases_section(block_elem: Element) -> str:
     """Format the PHRASES section."""
     lines = ["---", "", "## PHRASES", ""]
@@ -643,12 +787,9 @@ def format_phrases_section(block_elem: Element) -> str:
             phrase = normalize_whitespace(get_all_text(l_elem))
             lines.append(f"**{phrase}**")
 
-        # Definition
-        msdict = find_first_by_class(subentry, "msDict")
-        if msdict is not None:
-            content = format_definition_block(msdict)
-            if content:
-                lines.append(content)
+        # Definition content (handles se2 senses and/or direct msDicts)
+        content_lines = format_subentry_content(subentry)
+        lines.extend(content_lines)
 
         lines.append("")
 
@@ -666,12 +807,9 @@ def format_phrasal_verbs_section(block_elem: Element) -> str:
             phrase = normalize_whitespace(get_all_text(l_elem))
             lines.append(f"**{phrase}**")
 
-        # Definition
-        msdict = find_first_by_class(subentry, "msDict")
-        if msdict is not None:
-            content = format_definition_block(msdict)
-            if content:
-                lines.append(content)
+        # Definition content (handles se2 senses and/or direct msDicts)
+        content_lines = format_subentry_content(subentry)
+        lines.extend(content_lines)
 
         lines.append("")
 

@@ -502,6 +502,185 @@ class TestFormatPosBlock:
         assert "*Astronomy*" in result
 
 
+class TestFormatSubentryContent:
+    """Tests for format_subentry_content function."""
+
+    def test_simple_msdict(self):
+        xml = """
+        <span class="subEntry">
+            <span class="l">a phrase</span>
+            <span class="msDict">
+                <span class="df">phrase meaning</span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_content(elem)
+        assert len(result) == 1
+        assert "phrase meaning" in result[0]
+
+    def test_with_se2_numbered_senses(self):
+        xml = """
+        <span class="subEntry">
+            <span class="l">settle accounts</span>
+            <span class="se2">
+                <span class="sn">1</span>
+                <span class="msDict">
+                    <span class="df">have revenge on</span>
+                </span>
+            </span>
+            <span class="se2">
+                <span class="sn">2</span>
+                <span class="msDict">
+                    <span class="df">pay money owed</span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_content(elem)
+        assert len(result) == 2
+        assert "1 have revenge on" in result[0]
+        assert "2 pay money owed" in result[1]
+
+    def test_with_subsenses(self):
+        xml = """
+        <span class="subEntry">
+            <span class="l">on one's own account</span>
+            <span class="msDict">
+                <span class="df">for one's own purposes</span>
+            </span>
+            <span class="msDict t_subsense">
+                <span class="df">alone; unaided</span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_content(elem)
+        assert len(result) == 2
+        assert "for one's own purposes" in result[0]
+        assert "  - alone; unaided" in result[1]
+
+
+class TestFormatSubentrySense:
+    """Tests for format_subentry_sense function."""
+
+    def test_numbered_sense_with_definition(self):
+        xml = """
+        <span class="se2">
+            <span class="sn">1</span>
+            <span class="msDict">
+                <span class="df">first meaning</span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_sense(elem)
+        assert len(result) == 1
+        assert "1 first meaning" in result[0]
+
+    def test_with_form_group(self):
+        xml = """
+        <span class="se2">
+            <span class="x_xoh">
+                <span class="tg_se2">1</span>
+                <span class="fg">( <span class="f">account for something</span> )</span>
+            </span>
+            <span class="msDict">
+                <span class="df">give a satisfactory record</span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_sense(elem)
+        assert len(result) == 1
+        assert "1" in result[0]
+        assert "account for something" in result[0]
+        assert "give a satisfactory record" in result[0]
+
+    def test_with_subsenses(self):
+        xml = """
+        <span class="se2">
+            <span class="sn">1</span>
+            <span class="msDict">
+                <span class="df">main meaning</span>
+            </span>
+            <span class="msDict t_subsense">
+                <span class="df">sub meaning one</span>
+            </span>
+            <span class="msDict t_subsense">
+                <span class="df">sub meaning two</span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_sense(elem)
+        assert len(result) == 3
+        assert "1 main meaning" in result[0]
+        assert "  - sub meaning one" in result[1]
+        assert "  - sub meaning two" in result[2]
+
+
+class TestFormatSubentryMsdict:
+    """Tests for format_subentry_msdict function."""
+
+    def test_simple_definition(self):
+        xml = """
+        <span class="msDict">
+            <span class="df">a definition</span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_msdict(elem, is_subsense=False)
+        assert result == "a definition"
+
+    def test_subsense_has_bullet_prefix(self):
+        xml = """
+        <span class="msDict t_subsense">
+            <span class="df">a subsense</span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_msdict(elem, is_subsense=True)
+        assert result == "  - a subsense"
+
+    def test_with_form_group(self):
+        xml = """
+        <span class="msDict">
+            <span class="fg">( <span class="f">account for someone</span> )</span>
+            <span class="df">know the whereabouts</span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_msdict(elem, is_subsense=False)
+        assert "account for someone" in result
+        assert "know the whereabouts" in result
+
+    def test_with_label_group(self):
+        xml = """
+        <span class="msDict">
+            <span class="lg"><span class="reg">archaic</span></span>
+            <span class="df">an old meaning</span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_msdict(elem, is_subsense=False)
+        assert "archaic" in result
+        assert "an old meaning" in result
+
+    def test_with_example(self):
+        xml = """
+        <span class="msDict">
+            <span class="df">a definition</span>
+            <span class="eg"><span class="ex">an example sentence</span></span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_subentry_msdict(elem, is_subsense=False)
+        assert "a definition" in result
+        assert "an example sentence" in result
+
+
 class TestFormatPhrasesSection:
     """Tests for format_phrases_section function."""
 
@@ -521,6 +700,52 @@ class TestFormatPhrasesSection:
         assert "## PHRASES" in result
         assert "**a phrase**" in result
         assert "phrase meaning" in result
+
+    def test_formats_phrase_with_numbered_senses(self):
+        xml = """
+        <span class="subEntryBlock t_phrases">
+            <span class="subEntry">
+                <span class="l">settle accounts with</span>
+                <span class="se2">
+                    <span class="sn">1</span>
+                    <span class="msDict">
+                        <span class="df">have revenge on</span>
+                    </span>
+                </span>
+                <span class="se2">
+                    <span class="sn">2</span>
+                    <span class="msDict">
+                        <span class="df">pay money owed to (someone)</span>
+                    </span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrases_section(elem)
+        assert "**settle accounts with**" in result
+        assert "1 have revenge on" in result
+        assert "2 pay money owed to (someone)" in result
+
+    def test_formats_phrase_with_subsenses(self):
+        xml = """
+        <span class="subEntryBlock t_phrases">
+            <span class="subEntry">
+                <span class="l">on one's own account</span>
+                <span class="msDict">
+                    <span class="df">for one's own purposes; for oneself</span>
+                </span>
+                <span class="msDict t_subsense">
+                    <span class="df">alone; unaided</span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrases_section(elem)
+        assert "**on one's own account**" in result
+        assert "for one's own purposes; for oneself" in result
+        assert "  - alone; unaided" in result
 
 
 class TestFormatPhrasalVerbsSection:
@@ -596,6 +821,89 @@ class TestFormatPhrasalVerbsSection:
         elem = ET.fromstring(xml)
         result = parse.format_phrasal_verbs_section(elem)
         assert result.startswith("---")
+
+    def test_formats_phrasal_verb_with_numbered_senses(self):
+        xml = """
+        <span class="subEntryBlock t_phrasalVerbs">
+            <span class="subEntry">
+                <span class="l">account for</span>
+                <span class="se2">
+                    <span class="sn">1</span>
+                    <span class="msDict">
+                        <span class="df">give a satisfactory record</span>
+                    </span>
+                </span>
+                <span class="se2">
+                    <span class="sn">2</span>
+                    <span class="msDict">
+                        <span class="df">succeed in killing or defeating</span>
+                    </span>
+                </span>
+                <span class="se2">
+                    <span class="sn">3</span>
+                    <span class="msDict">
+                        <span class="df">supply or make up a specified amount</span>
+                    </span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrasal_verbs_section(elem)
+        assert "**account for**" in result
+        assert "1 give a satisfactory record" in result
+        assert "2 succeed in killing or defeating" in result
+        assert "3 supply or make up a specified amount" in result
+
+    def test_formats_phrasal_verb_with_subsenses(self):
+        xml = """
+        <span class="subEntryBlock t_phrasalVerbs">
+            <span class="subEntry">
+                <span class="l">account for</span>
+                <span class="se2">
+                    <span class="sn">1</span>
+                    <span class="msDict">
+                        <span class="df">give a satisfactory record</span>
+                    </span>
+                    <span class="msDict t_subsense">
+                        <span class="df">provide an explanation or reason</span>
+                    </span>
+                    <span class="msDict t_subsense">
+                        <span class="df">know the whereabouts of someone</span>
+                    </span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrasal_verbs_section(elem)
+        assert "**account for**" in result
+        assert "1 give a satisfactory record" in result
+        assert "  - provide an explanation or reason" in result
+        assert "  - know the whereabouts of someone" in result
+
+    def test_formats_phrasal_verb_with_form_group(self):
+        xml = """
+        <span class="subEntryBlock t_phrasalVerbs">
+            <span class="subEntry">
+                <span class="l">account for</span>
+                <span class="se2">
+                    <span class="x_xoh">
+                        <span class="tg_se2">1</span>
+                        <span class="fg">( <span class="f">account for something</span> )</span>
+                    </span>
+                    <span class="msDict">
+                        <span class="df">give a satisfactory record</span>
+                    </span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrasal_verbs_section(elem)
+        assert "**account for**" in result
+        assert "account for something" in result
+        assert "give a satisfactory record" in result
 
 
 class TestFormatDerivativesSection:
