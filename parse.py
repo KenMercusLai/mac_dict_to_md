@@ -56,6 +56,8 @@ HANDLED_CLASSES = {
     "df",
     "eg",
     "ex",
+    "f",
+    "fg",
     "lg",
     "reg",
     "bold",
@@ -306,6 +308,12 @@ def format_inline_content(elem: Element) -> str:
 
         # Bold text
         elif "bold" in classes:
+            text = normalize_whitespace(format_inline_content(child))
+            if text:
+                result.append(f"**{text}**")
+
+        # Word form - bold
+        elif "f" in classes:
             text = normalize_whitespace(format_inline_content(child))
             if text:
                 result.append(f"**{text}**")
