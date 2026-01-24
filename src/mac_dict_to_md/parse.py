@@ -452,7 +452,7 @@ def format_inline_content(elem: Element) -> str:
 
 
 def format_header(root: Element) -> str:
-    """Format the entry header: word, homograph, pronunciation."""
+    """Format the entry header: word, homograph, pronunciation, variant."""
     header_parts = []
 
     # Get word from d:title attribute (cleanest source)
@@ -478,6 +478,15 @@ def format_header(root: Element) -> str:
         pron_text = normalize_whitespace(get_all_text(prx_elem))
         if pron_text:
             header_parts.append(pron_text)
+
+    # Find variant group (e.g., "(also oxford)")
+    hg_elem = find_first_by_class(root, "hg")
+    if hg_elem is not None:
+        vg_elem = find_first_by_class(hg_elem, "vg", direct_only=True)
+        if vg_elem is not None:
+            vg_text = normalize_whitespace(format_inline_content(vg_elem))
+            if vg_text:
+                header_parts.append(vg_text)
 
     return " ".join(header_parts) if header_parts else ""
 
@@ -535,6 +544,13 @@ def format_sense(se2_elem: Element, is_subsense: bool = False) -> str:
                 lines.append(subsense_text)
         else:
             # Main sense definition
+            # Variant group (e.g., "(also Oxford shoe)") before definition
+            vg_elem = find_first_by_class(msdict, "vg", direct_only=True)
+            if vg_elem is not None:
+                vg_text = normalize_whitespace(format_inline_content(vg_elem))
+                if vg_text:
+                    main_content.append(vg_text)
+
             # Label group (e.g., "derogatory") before definition
             lg_elem = find_first_by_class(msdict, "lg", direct_only=True)
             if lg_elem is not None:
