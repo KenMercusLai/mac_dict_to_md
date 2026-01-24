@@ -69,6 +69,7 @@ HANDLED_CLASSES = {
     "work",
     "tx",
     "q",
+    "sy",
     "subEnt",
     "sup",
     # Fractions
@@ -325,6 +326,12 @@ def format_inline_content(elem: Element) -> str:
 
         # ge - italic
         elif "ge" in classes:
+            text = normalize_whitespace(format_inline_content(child))
+            if text:
+                result.append(f"*{text}*")
+
+        # sy - italic (grammatical form descriptors like "as adjective")
+        elif "sy" in classes:
             text = normalize_whitespace(format_inline_content(child))
             if text:
                 result.append(f"*{text}*")
