@@ -36,11 +36,11 @@ KNOWN_TAGS = {
 # Classes that have explicit formatting rules
 HANDLED_CLASSES = {
     # Header
-    'hg', 'hw', 'prx', 'ph', 'gp',
+    'hg', 'hw', 'prx', 'ph', 'gp', 'hsb', 'syl_txt',
     # Structure
-    'sg', 'se1', 'se2', 'msDict', 'posg', 'pos', 'gg',
+    'sg', 'se1', 'se2', 'msDict', 'posg', 'pos', 'gg', 'x_xdh',
     # Content
-    'df', 'eg', 'ex', 'lg', 'reg', 'bold', 'l', 'lbl', 'sn',
+    'df', 'eg', 'ex', 'lg', 'reg', 'bold', 'l', 'lbl', 'sn', 'sj',
     # Fractions
     'frac', 'nu', 'dn',
     # Sections
@@ -272,19 +272,21 @@ def format_header(root: Element) -> str:
     """Format the entry header: word, homograph, pronunciation."""
     header_parts = []
 
-    # Find headword
-    hw_elem = find_first_by_class(root, 'hw')
-    if hw_elem is not None:
-        # Get word text (before homograph span)
-        word = get_direct_text(hw_elem)
+    # Get word from d:title attribute (cleanest source)
+    word = root.get('{http://www.apple.com/DTDs/DictionaryService-1.0.rng}title', '')
+    if not word:
+        word = root.get('d:title', '')
 
-        # Get homograph number
+    # Get homograph number
+    hw_elem = find_first_by_class(root, 'hw')
+    homograph = ''
+    if hw_elem is not None:
         hom_elem = find_first_by_class(hw_elem, 'ty_hom')
-        homograph = ''
         if hom_elem is not None:
             hom_num = get_all_text(hom_elem).strip()
             homograph = SUPERSCRIPT.get(hom_num, hom_num)
 
+    if word:
         header_parts.append(f'# {word}{homograph}')
 
     # Find pronunciation
@@ -400,29 +402,57 @@ def format_subsense(msdict_elem: Element) -> str:
 def format_pos_block(se1_elem: Element) -> str:
     """Format a part-of-speech block with all its senses."""
     lines = []
+    pos_line_parts = []
 
     # Part of speech
     pos_elem = find_first_by_class(se1_elem, 'pos')
     if pos_elem is not None:
         pos_text = normalize_whitespace(get_all_text(pos_elem))
         if pos_text:
-            lines.append(f'**{pos_text}**')
+            pos_line_parts.append(f'**{pos_text}**')
 
     # Grammar info [with object]
     gg_elem = find_first_by_class(se1_elem, 'gg')
-    if gg_elem is not None and lines:
+    if gg_elem is not None:
         gg_text = normalize_whitespace(get_all_text(gg_elem))
         if gg_text:
-            lines[-1] += f' {gg_text}'
+            pos_line_parts.append(gg_text)
 
+    # Subject label (e.g., "Astronomy", "Chemistry")
+    sj_elem = find_first_by_class(se1_elem, 'sj')
+    if sj_elem is not None:
+        sj_text = normalize_whitespace(get_all_text(sj_elem))
+        if sj_text:
+            pos_line_parts.append(f'*{sj_text}*')
+
+    if pos_line_parts:
+        lines.append(' '.join(pos_line_parts))
     lines.append('')  # Blank line after POS
 
-    # Process senses (se2 elements)
+    # Check if there are se2 elements (numbered senses)
+    has_se2 = False
     for child in se1_elem:
         if has_class(child, 'se2'):
+            has_se2 = True
             sense_text = format_sense(child)
             if sense_text:
                 lines.append(sense_text)
+
+    # If no se2, check for direct msDict definitions under se1
+    if not has_se2:
+        for child in se1_elem:
+            if has_class(child, 'msDict'):
+                df_elem = find_first_by_class(child, 'df')
+                if df_elem is not None:
+                    df_text = normalize_whitespace(format_inline_content(df_elem))
+                    if df_text:
+                        lines.append(df_text)
+                # Examples in this msDict
+                for eg_elem in child:
+                    if has_class(eg_elem, 'eg'):
+                        eg_text = format_example_group(eg_elem)
+                        if eg_text:
+                            lines.append(eg_text)
 
     return '\n'.join(lines)
 
