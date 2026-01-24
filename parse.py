@@ -40,7 +40,7 @@ HANDLED_CLASSES = {
     # Structure
     'sg', 'se1', 'se2', 'msDict', 'posg', 'pos', 'gg', 'x_xdh',
     # Content
-    'df', 'eg', 'ex', 'lg', 'reg', 'bold', 'l', 'lbl', 'sn', 'sj',
+    'df', 'eg', 'ex', 'lg', 'reg', 'bold', 'l', 'lbl', 'sn', 'sj', 'work',
     # Fractions
     'frac', 'nu', 'dn',
     # Sections
