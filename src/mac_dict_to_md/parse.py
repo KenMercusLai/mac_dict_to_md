@@ -615,24 +615,37 @@ def format_pos_block(se1_elem: Element) -> str:
     if not has_se2:
         for child in se1_elem:
             if has_class(child, "msDict"):
-                df_elem = find_first_by_class(child, "df")
-                if df_elem is not None:
-                    df_text = normalize_whitespace(format_inline_content(df_elem))
-                    if df_text:
-                        lines.append(df_text)
-                # Examples in this msDict
-                for eg_elem in child:
-                    if has_class(eg_elem, "eg"):
-                        eg_text = format_example_group(eg_elem)
-                        if eg_text:
-                            lines.append(eg_text)
-                # Notes in this msDict
-                for note_elem in child:
-                    if has_class(note_elem, "note"):
-                        note_text = format_note(note_elem)
+                inline_parts: list[str] = []
+
+                # Collect inline content (df, gp, eg) on one line
+                for msdict_child in child:
+                    classes = get_class(msdict_child)
+                    if "note" in classes:
+                        # Notes are separate - first flush inline content
+                        if inline_parts:
+                            lines.append(" ".join(inline_parts))
+                            inline_parts = []
+                        note_text = format_note(msdict_child)
                         if note_text:
                             lines.append("")
                             lines.append(note_text)
+                    elif "df" in classes:
+                        df_text = normalize_whitespace(format_inline_content(msdict_child))
+                        if df_text:
+                            inline_parts.append(df_text)
+                    elif "eg" in classes:
+                        eg_text = format_example_group(msdict_child)
+                        if eg_text:
+                            inline_parts.append(eg_text)
+                    elif "gp" in classes:
+                        # Punctuation like ":" after definition
+                        gp_text = get_all_text(msdict_child).strip()
+                        if gp_text:
+                            inline_parts.append(gp_text)
+
+                # Flush remaining inline content
+                if inline_parts:
+                    lines.append(" ".join(inline_parts))
 
     return "\n".join(lines)
 

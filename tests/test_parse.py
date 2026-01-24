@@ -524,6 +524,36 @@ class TestFormatPosBlock:
         assert "**noun**" in result
         assert "*Astronomy*" in result
 
+    def test_definition_with_colon_and_examples_inline(self):
+        """Test that definition, punctuation, and examples are on same line."""
+        xml = """
+        <span class="se1">
+            <span class="pos">symbol</span>
+            <span class="msDict">
+                <span class="df">the pound sign</span>
+                <span class="gp tg_df">:</span>
+                <span class="eg">
+                    <span class="ex">example one</span>
+                    <span class="gp tg_eg">|</span>
+                </span>
+                <span class="eg">
+                    <span class="ex">example two</span>
+                    <span class="gp tg_eg">.</span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_pos_block(elem)
+        lines = [line for line in result.split("\n") if line.strip()]
+        # Find the line with the definition
+        def_line = next((line for line in lines if "pound sign" in line), None)
+        assert def_line is not None
+        # All content should be on same line
+        assert ":" in def_line
+        assert "*example one*" in def_line
+        assert "*example two*" in def_line
+
 
 class TestFormatSubentryContent:
     """Tests for format_subentry_content function."""
