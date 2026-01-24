@@ -386,6 +386,12 @@ def format_inline_content(elem: Element) -> str:
             if text:
                 result.append(f"**{text}**")
 
+        # Variant word (inside vg) - bold
+        elif "v" in classes:
+            text = normalize_whitespace(format_inline_content(child))
+            if text:
+                result.append(f"**{text}**")
+
         # Label
         elif "lbl" in classes:
             text = normalize_whitespace(format_inline_content(child))

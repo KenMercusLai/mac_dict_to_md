@@ -432,6 +432,20 @@ class TestFormatInlineContent:
         assert "**" not in result
         assert "*plain text*" not in result
 
+    def test_vg_class_preserves_content(self):
+        """Test that vg (variant group) class preserves its content with bold variant."""
+        xml = '<span><span class="vg">(also <span class="v">slumberous</span>)</span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "(also **slumberous**)" in result
+
+    def test_v_class_formats_bold(self):
+        """Test that v (variant) class formats content as bold."""
+        xml = '<span><span class="v">variant</span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "**variant**" in result
+
 
 # ============================================================================
 # Section Formatting Tests
@@ -843,6 +857,46 @@ class TestFormatPhrasesSection:
         assert "for one's own purposes; for oneself" in result
         assert "  - alone; unaided" in result
 
+    def test_formats_phrase_with_variant_group(self):
+        """Test phrase with variant form (vg class) in x_xoh."""
+        xml = """
+        <span class="subEntryBlock t_phrases">
+            <span class="subEntry">
+                <span class="x_xoh">
+                    <span class="l">tear someone a new arsehole</span>
+                    <span class="vg">(also <span class="v">rip someone a new arsehole</span>)</span>
+                </span>
+                <span class="msDict">
+                    <span class="df">criticize someone severely</span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrases_section(elem)
+        assert "**tear someone a new arsehole**" in result
+        assert "(also **rip someone a new arsehole**)" in result
+        assert "criticize someone severely" in result
+
+    def test_formats_phrase_without_variant_still_works(self):
+        """Test that phrases without variant groups still work correctly."""
+        xml = """
+        <span class="subEntryBlock t_phrases">
+            <span class="subEntry">
+                <span class="x_xoh">
+                    <span class="l">a simple phrase</span>
+                </span>
+                <span class="msDict">
+                    <span class="df">a simple definition</span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrases_section(elem)
+        assert "**a simple phrase**" in result
+        assert "a simple definition" in result
+
 
 class TestFormatPhrasalVerbsSection:
     """Tests for format_phrasal_verbs_section function."""
@@ -1001,6 +1055,27 @@ class TestFormatPhrasalVerbsSection:
         assert "account for something" in result
         assert "give a satisfactory record" in result
 
+    def test_formats_phrasal_verb_with_variant_group(self):
+        """Test phrasal verb with variant form (vg class) in x_xoh."""
+        xml = """
+        <span class="subEntryBlock t_phrasalVerbs">
+            <span class="subEntry">
+                <span class="x_xoh">
+                    <span class="l">get along</span>
+                    <span class="vg">(also <span class="v">get on</span>)</span>
+                </span>
+                <span class="msDict">
+                    <span class="df">have a harmonious relationship</span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrasal_verbs_section(elem)
+        assert "**get along**" in result
+        assert "(also **get on**)" in result
+        assert "have a harmonious relationship" in result
+
 
 class TestFormatDerivativesSection:
     """Tests for format_derivatives_section function."""
@@ -1019,6 +1094,63 @@ class TestFormatDerivativesSection:
         result = parse.format_derivatives_section(elem)
         assert "## DERIVATIVES" in result
         assert "**derivation**" in result
+        assert "noun" in result
+
+    def test_formats_derivative_with_variant_group(self):
+        """Test derivative with variant form (vg class) in x_xoh."""
+        xml = """
+        <span class="subEntryBlock t_derivatives">
+            <span class="subEntry">
+                <span class="x_xoh">
+                    <span class="l">slumbrous</span>
+                    <span class="pr">|ˈsləmbərəs|</span>
+                    <span class="vg">(<span class="v">slumberous</span>)</span>
+                </span>
+                <span class="pos">adjective</span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_derivatives_section(elem)
+        assert "**slumbrous**" in result
+        assert "|ˈsləmbərəs|" in result
+        assert "(**slumberous**)" in result
+        assert "adjective" in result
+
+    def test_formats_derivative_without_variant_still_works(self):
+        """Test that derivatives without variant groups still work correctly."""
+        xml = """
+        <span class="subEntryBlock t_derivatives">
+            <span class="subEntry">
+                <span class="x_xoh">
+                    <span class="l">simple</span>
+                    <span class="pr">|ˈsimpəl|</span>
+                </span>
+                <span class="pos">adjective</span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_derivatives_section(elem)
+        assert "**simple**" in result
+        assert "|ˈsimpəl|" in result
+        assert "adjective" in result
+
+    def test_formats_derivative_with_prx_pronunciation(self):
+        """Test derivative with prx class pronunciation."""
+        xml = """
+        <span class="subEntryBlock t_derivatives">
+            <span class="subEntry">
+                <span class="l">derivation</span>
+                <span class="prx">|ˌderəˈvāSH(ə)n|</span>
+                <span class="pos">noun</span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_derivatives_section(elem)
+        assert "**derivation**" in result
+        assert "|ˌderəˈvāSH(ə)n|" in result
         assert "noun" in result
 
 
@@ -1182,6 +1314,22 @@ class TestTrackElement:
         elem = ET.fromstring(xml)
         parse.track_element(elem)
         assert "xrg" not in parse.unhandled_classes
+
+    def test_v_class_is_handled(self):
+        """Test that v (variant word) class is recognized as handled."""
+        parse.unhandled_classes.clear()
+        xml = '<span class="v">slumberous</span>'
+        elem = ET.fromstring(xml)
+        parse.track_element(elem)
+        assert "v" not in parse.unhandled_classes
+
+    def test_vg_class_is_handled(self):
+        """Test that vg (variant group) class is recognized as handled."""
+        parse.unhandled_classes.clear()
+        xml = '<span class="vg">(also slumberous)</span>'
+        elem = ET.fromstring(xml)
+        parse.track_element(elem)
+        assert "vg" not in parse.unhandled_classes
 
 
 class TestReportUnhandled:
