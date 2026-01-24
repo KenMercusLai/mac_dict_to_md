@@ -58,6 +58,7 @@ HANDLED_CLASSES = {
     "ex",
     "f",
     "fg",
+    "ge",
     "lg",
     "reg",
     "bold",
@@ -317,6 +318,12 @@ def format_inline_content(elem: Element) -> str:
             text = normalize_whitespace(format_inline_content(child))
             if text:
                 result.append(f"**{text}**")
+
+        # ge - italic
+        elif "ge" in classes:
+            text = normalize_whitespace(format_inline_content(child))
+            if text:
+                result.append(f"*{text}*")
 
         # Register label (historical, etc) - italic
         elif "reg" in classes:
