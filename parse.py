@@ -335,10 +335,18 @@ def format_inline_content(elem: Element) -> str:
                 result.append(f"**{text}**")
 
         # subEnt (subscript, e.g., chemical formulas) - convert to subscript
+        # Strip surrounding whitespace to keep formulas compact (C₁₁H₁₈ not C ₁₁ H ₁₈)
         elif "subEnt" in classes:
+            # Strip trailing whitespace from previous content
+            if result and result[-1].endswith((" ", "\n", "\t")):
+                result[-1] = result[-1].rstrip()
             text = normalize_whitespace(get_all_text(child))
             subscript_text = "".join(SUBSCRIPT.get(c, c) for c in text)
             result.append(subscript_text)
+            # Strip leading whitespace from tail
+            if child.tail:
+                result.append(child.tail.lstrip())
+            continue  # Skip normal tail processing
 
         # Register label (historical, etc) - italic
         elif "reg" in classes:
