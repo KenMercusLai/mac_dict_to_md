@@ -41,6 +41,8 @@ HANDLED_CLASSES = {
     'sg', 'se1', 'se2', 'msDict', 'posg', 'pos', 'gg',
     # Content
     'df', 'eg', 'ex', 'lg', 'reg', 'bold', 'l', 'lbl', 'sn',
+    # Fractions
+    'frac', 'nu', 'dn',
     # Sections
     'subEntryBlock', 'subEntry', 'etym', 'dg', 'date', 'la', 'ff', 'trans', 'pr',
     # Markers (prefixes we recognize)
@@ -49,8 +51,27 @@ HANDLED_CLASSES = {
     'x_xo0', 'x_xo1', 'x_xo2', 'x_xoh', 'x_xoLblBlk', 'hasSn', 'entry',
 }
 
-# Superscript mapping for homograph numbers
-SUPERSCRIPT = {'1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'}
+# Superscript mapping for homograph numbers and fractions
+SUPERSCRIPT = {
+    '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+    '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+}
+
+# Subscript mapping for fraction denominators
+SUBSCRIPT = {
+    '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+    '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+}
+
+# Unicode fraction mapping: (numerator, denominator) -> unicode char
+UNICODE_FRACTIONS: dict[tuple[int, int], str] = {
+    (1, 2): '½', (1, 3): '⅓', (2, 3): '⅔',
+    (1, 4): '¼', (3, 4): '¾',
+    (1, 5): '⅕', (2, 5): '⅖', (3, 5): '⅗', (4, 5): '⅘',
+    (1, 6): '⅙', (5, 6): '⅚',
+    (1, 7): '⅐', (1, 8): '⅛', (3, 8): '⅜', (5, 8): '⅝', (7, 8): '⅞',
+    (1, 9): '⅑', (1, 10): '⅒',
+}
 
 
 def get_class(elem: Element) -> list[str]:
@@ -139,6 +160,36 @@ def track_element(elem: Element) -> None:
             unhandled_classes[cls] = (_current_source_file, snippet)
 
 
+def format_fraction(elem: Element) -> str:
+    """Format a fraction element (class='frac') with nu/dn children."""
+    numerator = ''
+    denominator = ''
+
+    for child in elem:
+        classes = get_class(child)
+        if 'nu' in classes:
+            # Extract only digits from numerator (ignore nested slash element)
+            text = ''.join(child.itertext())
+            numerator = ''.join(c for c in text if c.isdigit())
+        elif 'dn' in classes:
+            # Extract only digits from denominator
+            text = ''.join(child.itertext())
+            denominator = ''.join(c for c in text if c.isdigit())
+
+    # Try unicode fraction first
+    try:
+        key = (int(numerator), int(denominator))
+        if key in UNICODE_FRACTIONS:
+            return UNICODE_FRACTIONS[key]
+    except ValueError:
+        pass
+
+    # Fallback to superscript/subscript with fraction slash
+    sup = ''.join(SUPERSCRIPT.get(c, c) for c in numerator)
+    sub = ''.join(SUBSCRIPT.get(c, c) for c in denominator)
+    return f'{sup}⁄{sub}'
+
+
 def format_inline_content(elem: Element) -> str:
     """
     Format inline content with proper styling (bold, italic, etc).
@@ -197,6 +248,14 @@ def format_inline_content(elem: Element) -> str:
             text = normalize_whitespace(get_all_text(child))
             if text:
                 result.append(text)
+
+        # Fraction - format as unicode or superscript/subscript
+        elif 'frac' in classes:
+            result.append(format_fraction(child))
+
+        # Numerator/denominator - skip (handled by parent frac)
+        elif 'nu' in classes or 'dn' in classes:
+            pass
 
         # Default: recurse
         else:
