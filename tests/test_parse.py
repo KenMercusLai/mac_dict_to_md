@@ -154,6 +154,87 @@ class TestGetAllText:
         assert parse.get_all_text(elem) == "deep"
 
 
+class TestGetPronunciationText:
+    """Tests for get_pronunciation_text function."""
+
+    def test_skips_respell_by_default(self):
+        """By default (IPA mode), t_respell content should be skipped."""
+        parse._use_respell = False
+        xml = '''
+        <prx>
+            <span class="ph t_IPA">ˈɑksfərd</span>
+            <span class="ph t_respell">AHK-sferd</span>
+        </prx>
+        '''
+        elem = ET.fromstring(xml)
+        result = parse.get_pronunciation_text(elem)
+        assert "ˈɑksfərd" in result
+        assert "AHK-sferd" not in result
+
+    def test_skips_ipa_when_respell_enabled(self):
+        """When --respell is used, t_IPA content should be skipped."""
+        parse._use_respell = True
+        xml = '''
+        <prx>
+            <span class="ph t_IPA">ˈɑksfərd</span>
+            <span class="ph t_respell">AHK-sferd</span>
+        </prx>
+        '''
+        elem = ET.fromstring(xml)
+        result = parse.get_pronunciation_text(elem)
+        assert "ˈɑksfərd" not in result
+        assert "AHK-sferd" in result
+        # Reset for other tests
+        parse._use_respell = False
+
+    def test_handles_nested_structure(self):
+        """Should handle pronunciation with nested elements."""
+        parse._use_respell = False
+        xml = '''
+        <prx>
+            <span class="ph t_IPA" dialect="AmE">
+                ˈɑksfərd
+            </span>
+            <span class="ph t_respell">
+                AHK-sferd
+            </span>
+        </prx>
+        '''
+        elem = ET.fromstring(xml)
+        result = parse.get_pronunciation_text(elem)
+        assert "ˈɑksfərd" in result
+        assert "AHK-sferd" not in result
+
+    def test_preserves_tail_text(self):
+        """Tail text after skipped elements should be preserved."""
+        parse._use_respell = False
+        xml = '''
+        <prx>|<span class="ph t_IPA">ˈɑksfərd</span>|<span class="ph t_respell">AHK</span>|</prx>
+        '''
+        elem = ET.fromstring(xml)
+        result = parse.get_pronunciation_text(elem)
+        # Should have | before and after IPA, and | after skipped respell
+        assert "|ˈɑksfərd|" in result
+        assert "AHK" not in result
+
+    def test_handles_only_ipa(self):
+        """Should work when only IPA is present."""
+        parse._use_respell = False
+        xml = '<prx><span class="ph t_IPA">ˈɑksfərd</span></prx>'
+        elem = ET.fromstring(xml)
+        result = parse.get_pronunciation_text(elem)
+        assert "ˈɑksfərd" in result
+
+    def test_handles_only_respell(self):
+        """Should work when only respell is present."""
+        parse._use_respell = True
+        xml = '<prx><span class="ph t_respell">AHK-sferd</span></prx>'
+        elem = ET.fromstring(xml)
+        result = parse.get_pronunciation_text(elem)
+        assert "AHK-sferd" in result
+        parse._use_respell = False
+
+
 class TestNormalizeWhitespace:
     """Tests for normalize_whitespace function."""
 

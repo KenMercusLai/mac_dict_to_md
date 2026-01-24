@@ -6,6 +6,7 @@ Converts split dictionary XML entries into readable Markdown files
 that closely match the visual rendering of the macOS Dictionary app.
 """
 
+import argparse
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -15,6 +16,9 @@ from xml.etree.ElementTree import Element
 # Tracking for unhandled patterns with examples: pattern -> (source_file, xml_snippet)
 unhandled_tags: dict[str, tuple[str, str]] = {}
 unhandled_classes: dict[str, tuple[str, str]] = {}
+
+# Configuration for pronunciation format: if True, use respelling; if False, use IPA
+_use_respell: bool = False
 
 # Current source file being processed (for tracking)
 _current_source_file: str = ""
@@ -210,6 +214,31 @@ def get_direct_text(elem: Element) -> str:
 def get_all_text(elem: Element) -> str:
     """Recursively get all text content from element and children."""
     return "".join(elem.itertext()).strip()
+
+
+def get_pronunciation_text(elem: Element) -> str:
+    """Get pronunciation text, filtering based on _use_respell setting.
+
+    If _use_respell is True, skip t_IPA spans and show t_respell.
+    If _use_respell is False (default), skip t_respell spans and show t_IPA.
+    """
+    skip_class = "t_IPA" if _use_respell else "t_respell"
+
+    def iter_text_filtered(el: Element) -> Iterator[str]:
+        """Iterate text, skipping elements with the skip_class."""
+        if el.text:
+            yield el.text
+        for child in el:
+            if has_class(child, skip_class):
+                # Skip this element entirely, but include its tail
+                if child.tail:
+                    yield child.tail
+            else:
+                yield from iter_text_filtered(child)
+                if child.tail:
+                    yield child.tail
+
+    return "".join(iter_text_filtered(elem)).strip()
 
 
 def normalize_whitespace(text: str) -> str:
@@ -495,7 +524,7 @@ def format_header(root: Element) -> str:
     # Find pronunciation
     prx_elem = find_first_by_class(root, "prx")
     if prx_elem is not None:
-        pron_text = normalize_whitespace(get_all_text(prx_elem))
+        pron_text = normalize_whitespace(get_pronunciation_text(prx_elem))
         if pron_text:
             header_parts.append(pron_text)
 
@@ -951,7 +980,7 @@ def format_derivatives_section(block_elem: Element) -> str:
         if pr_elem is None:
             pr_elem = find_first_by_class(subentry, "prx")
         if pr_elem is not None:
-            pron = normalize_whitespace(get_all_text(pr_elem))
+            pron = normalize_whitespace(get_pronunciation_text(pr_elem))
             if pron:
                 parts.append(pron)
 
@@ -1181,17 +1210,35 @@ def save_unhandled_report(output_path: Path) -> None:
 
 def main() -> int:
     """Main entry point."""
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <directory>", file=sys.stderr)
-        return 1
+    global _use_respell
 
-    dir_path = Path(sys.argv[1])
+    parser = argparse.ArgumentParser(
+        description="Parse dictionary XML files into Markdown format."
+    )
+    parser.add_argument(
+        "directory",
+        type=Path,
+        help="Directory containing XML files to process",
+    )
+    parser.add_argument(
+        "--respell",
+        action="store_true",
+        help="Use respelling pronunciation instead of IPA",
+    )
+
+    args = parser.parse_args()
+    dir_path: Path = args.directory
+    _use_respell = args.respell
 
     if not dir_path.is_dir():
         print(f"Error: Not a directory: {dir_path}", file=sys.stderr)
         return 1
 
     print(f"Processing XML files in {dir_path}...")
+    if _use_respell:
+        print("Using respelling pronunciation format.")
+    else:
+        print("Using IPA pronunciation format.")
     count = process_directory(dir_path)
     print(f"Done. Processed {count} files.")
 
