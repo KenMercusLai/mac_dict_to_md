@@ -68,6 +68,7 @@ HANDLED_CLASSES = {
     "sj",
     "work",
     "tx",
+    "q",
     # Fractions
     "frac",
     "nu",
