@@ -1,0 +1,44 @@
+<d:entry xmlns:d="http://www.apple.com/DTDs/DictionaryService-1.0.rng" class="entry" d:title="get">
+  <span class="hg">
+    <span class="hw">get</span>
+    <span class="prx">|ɡet|</span>
+  </span>
+  <span class="sg">
+    <span class="se1">
+      <d:pos class="pos">verb</d:pos>
+      <span class="msDict">
+        <d:def class="df">come to have or hold; receive</d:def>
+        <span class="eg">
+          <span class="ex">I got a letter from him</span>
+        </span>
+      </span>
+    </span>
+  </span>
+  <span class="subEntryBlock t_phrasalVerbs">
+    <span class="x_xoh">PHRASAL VERBS</span>
+    <span class="subEntry">
+      <span class="l">get along</span>
+      <span class="msDict">
+        <d:def class="df">have a harmonious relationship</d:def>
+        <span class="eg">
+          <span class="ex">they seem to get along well</span>
+        </span>
+      </span>
+    </span>
+    <span class="subEntry">
+      <span class="l">get away</span>
+      <span class="msDict">
+        <d:def class="df">escape from a place or situation</d:def>
+      </span>
+    </span>
+    <span class="subEntry">
+      <span class="l">get by</span>
+      <span class="msDict">
+        <d:def class="df">manage with difficulty to live or accomplish something</d:def>
+        <span class="eg">
+          <span class="ex">we can just about get by on my salary</span>
+        </span>
+      </span>
+    </span>
+  </span>
+</d:entry>

@@ -44,6 +44,12 @@ def special_chars_entry_xml(fixtures_dir: Path) -> str:
 
 
 @pytest.fixture
+def phrasal_verbs_entry_xml(fixtures_dir: Path) -> str:
+    """Load phrasal_verbs_entry.xml fixture."""
+    return (fixtures_dir / "phrasal_verbs_entry.xml").read_text(encoding="utf-8")
+
+
+@pytest.fixture
 def simple_entry_element(simple_entry_xml: str) -> ET.Element:
     """Parse simple_entry.xml into an Element."""
     return ET.fromstring(simple_entry_xml)
@@ -65,6 +71,12 @@ def homograph_entry_element(homograph_entry_xml: str) -> ET.Element:
 def fraction_entry_element(fraction_entry_xml: str) -> ET.Element:
     """Parse fraction_entry.xml into an Element."""
     return ET.fromstring(fraction_entry_xml)
+
+
+@pytest.fixture
+def phrasal_verbs_entry_element(phrasal_verbs_entry_xml: str) -> ET.Element:
+    """Parse phrasal_verbs_entry.xml into an Element."""
+    return ET.fromstring(phrasal_verbs_entry_xml)
 
 
 @pytest.fixture

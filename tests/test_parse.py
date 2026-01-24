@@ -523,6 +523,81 @@ class TestFormatPhrasesSection:
         assert "phrase meaning" in result
 
 
+class TestFormatPhrasalVerbsSection:
+    """Tests for format_phrasal_verbs_section function."""
+
+    def test_formats_phrasal_verbs(self):
+        xml = """
+        <span class="subEntryBlock t_phrasalVerbs">
+            <span class="subEntry">
+                <span class="l">get along</span>
+                <span class="msDict">
+                    <span class="df">have a harmonious relationship</span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrasal_verbs_section(elem)
+        assert "## PHRASAL VERBS" in result
+        assert "**get along**" in result
+        assert "have a harmonious relationship" in result
+
+    def test_formats_multiple_phrasal_verbs(self):
+        xml = """
+        <span class="subEntryBlock t_phrasalVerbs">
+            <span class="subEntry">
+                <span class="l">get along</span>
+                <span class="msDict">
+                    <span class="df">have a harmonious relationship</span>
+                </span>
+            </span>
+            <span class="subEntry">
+                <span class="l">get away</span>
+                <span class="msDict">
+                    <span class="df">escape from a place</span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrasal_verbs_section(elem)
+        assert "**get along**" in result
+        assert "**get away**" in result
+
+    def test_formats_phrasal_verbs_with_examples(self):
+        xml = """
+        <span class="subEntryBlock t_phrasalVerbs">
+            <span class="subEntry">
+                <span class="l">get by</span>
+                <span class="msDict">
+                    <span class="df">manage with difficulty</span>
+                    <span class="eg"><span class="ex">we can just about get by</span></span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrasal_verbs_section(elem)
+        assert "**get by**" in result
+        assert "manage with difficulty" in result
+
+    def test_section_has_horizontal_rule(self):
+        xml = """
+        <span class="subEntryBlock t_phrasalVerbs">
+            <span class="subEntry">
+                <span class="l">get along</span>
+                <span class="msDict">
+                    <span class="df">have a harmonious relationship</span>
+                </span>
+            </span>
+        </span>
+        """
+        elem = ET.fromstring(xml)
+        result = parse.format_phrasal_verbs_section(elem)
+        assert result.startswith("---")
+
+
 class TestFormatDerivativesSection:
     """Tests for format_derivatives_section function."""
 
@@ -616,6 +691,15 @@ class TestXmlToMarkdown:
     def test_with_fractions(self, fraction_entry_element):
         result = parse.xml_to_markdown(fraction_entry_element)
         assert "½" in result
+
+    def test_with_phrasal_verbs(self, phrasal_verbs_entry_element):
+        result = parse.xml_to_markdown(phrasal_verbs_entry_element)
+        assert "# get" in result
+        assert "## PHRASAL VERBS" in result
+        assert "**get along**" in result
+        assert "have a harmonious relationship" in result
+        assert "**get away**" in result
+        assert "**get by**" in result
 
 
 class TestProcessFile:

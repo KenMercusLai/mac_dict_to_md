@@ -94,6 +94,7 @@ HANDLED_CLASSES = {
     "t_subsense",
     "t_core",
     "t_phrases",
+    "t_phrasalVerbs",
     "t_derivatives",
     "ty_hom",
     "ty_label",
@@ -654,6 +655,29 @@ def format_phrases_section(block_elem: Element) -> str:
     return "\n".join(lines)
 
 
+def format_phrasal_verbs_section(block_elem: Element) -> str:
+    """Format the PHRASAL VERBS section."""
+    lines = ["---", "", "## PHRASAL VERBS", ""]
+
+    for subentry in find_by_class(block_elem, "subEntry"):
+        # Phrasal verb headword
+        l_elem = find_first_by_class(subentry, "l")
+        if l_elem is not None:
+            phrase = normalize_whitespace(get_all_text(l_elem))
+            lines.append(f"**{phrase}**")
+
+        # Definition
+        msdict = find_first_by_class(subentry, "msDict")
+        if msdict is not None:
+            content = format_definition_block(msdict)
+            if content:
+                lines.append(content)
+
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 def format_derivatives_section(block_elem: Element) -> str:
     """Format the DERIVATIVES section."""
     lines = ["---", "", "## DERIVATIVES", ""]
@@ -771,6 +795,8 @@ def xml_to_markdown(root: Element) -> str:
         if "subEntryBlock" in classes:
             if "t_phrases" in classes:
                 sections.append(format_phrases_section(child))
+            elif "t_phrasalVerbs" in classes:
+                sections.append(format_phrasal_verbs_section(child))
             elif "t_derivatives" in classes:
                 sections.append(format_derivatives_section(child))
 
