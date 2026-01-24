@@ -76,6 +76,7 @@ HANDLED_CLASSES = {
     "subEntryBlock",
     "subEntry",
     "etym",
+    "note",
     "dg",
     "date",
     "la",
@@ -325,6 +326,12 @@ def format_inline_content(elem: Element) -> str:
             if text:
                 result.append(f"*{text}*")
 
+        # tx (taxonomic terms) - bold
+        elif "tx" in classes:
+            text = normalize_whitespace(format_inline_content(child))
+            if text:
+                result.append(f"**{text}**")
+
         # Register label (historical, etc) - italic
         elif "reg" in classes:
             text = normalize_whitespace(format_inline_content(child))
@@ -561,6 +568,13 @@ def format_pos_block(se1_elem: Element) -> str:
                         eg_text = format_example_group(eg_elem)
                         if eg_text:
                             lines.append(eg_text)
+                # Notes in this msDict
+                for note_elem in child:
+                    if has_class(note_elem, "note"):
+                        note_text = format_note(note_elem)
+                        if note_text:
+                            lines.append("")
+                            lines.append(note_text)
 
     return "\n".join(lines)
 
@@ -642,6 +656,34 @@ def format_origin_section(etym_elem: Element) -> str:
     return "\n".join(lines)
 
 
+def format_note(note_elem: Element) -> str:
+    """Format a note element as a markdown blockquote."""
+    parts = []
+
+    # Check for label (e.g., "USAGE")
+    lbl_elem = find_first_by_class(note_elem, "lbl")
+    if lbl_elem is not None:
+        lbl_text = normalize_whitespace(get_all_text(lbl_elem)).strip()
+        if lbl_text:
+            parts.append(f"**{lbl_text}**")
+
+    # Get the rest of the note content
+    content = normalize_whitespace(format_inline_content(note_elem))
+
+    # Remove the label text from content if it was included
+    if lbl_elem is not None:
+        lbl_text = normalize_whitespace(get_all_text(lbl_elem)).strip()
+        if content.startswith(lbl_text):
+            content = content[len(lbl_text) :].strip()
+
+    if content:
+        parts.append(content)
+
+    if parts:
+        return "> " + " ".join(parts)
+    return ""
+
+
 def xml_to_markdown(root: Element) -> str:
     """Convert XML entry to Markdown."""
     sections = []
@@ -679,6 +721,13 @@ def xml_to_markdown(root: Element) -> str:
                 sections.append(format_phrases_section(child))
             elif "t_derivatives" in classes:
                 sections.append(format_derivatives_section(child))
+
+        elif "note" in classes:
+            note_text = format_note(child)
+            if note_text:
+                sections.append("")
+                sections.append(note_text)
+                sections.append("")
 
         elif "etym" in classes:
             sections.append(format_origin_section(child))
