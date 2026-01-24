@@ -114,6 +114,8 @@ HANDLED_CLASSES = {
     "x_blk",
     "xr",
     "xrg",
+    "v",     # variant word (inside vg)
+    "vg",    # variant group
 }
 
 # Superscript mapping for homograph numbers and fractions
@@ -527,6 +529,13 @@ def format_sense(se2_elem: Element, is_subsense: bool = False) -> str:
                 lines.append(subsense_text)
         else:
             # Main sense definition
+            # Label group (e.g., "derogatory") before definition
+            lg_elem = find_first_by_class(msdict, "lg", direct_only=True)
+            if lg_elem is not None:
+                lg_text = normalize_whitespace(format_inline_content(lg_elem))
+                if lg_text:
+                    main_content.append(lg_text)
+
             df_elem = find_first_by_class(msdict, "df", direct_only=True)
             if df_elem is not None:
                 df_text = normalize_whitespace(format_inline_content(df_elem))
@@ -599,6 +608,15 @@ def format_pos_block(se1_elem: Element) -> str:
         sj_text = normalize_whitespace(get_all_text(sj_elem))
         if sj_text:
             pos_line_parts.append(f"*{sj_text}*")
+
+    # Label group in header (e.g., "British English vulgar slang")
+    x_xdh_elem = find_first_by_class(se1_elem, "x_xdh", direct_only=True)
+    if x_xdh_elem is not None:
+        lg_elem = find_first_by_class(x_xdh_elem, "lg", direct_only=True)
+        if lg_elem is not None:
+            lg_text = normalize_whitespace(format_inline_content(lg_elem))
+            if lg_text:
+                pos_line_parts.append(lg_text)
 
     if pos_line_parts:
         lines.append(" ".join(pos_line_parts))
@@ -801,11 +819,24 @@ def format_phrases_section(block_elem: Element) -> str:
     lines = ["---", "", "## PHRASES", ""]
 
     for subentry in find_by_class(block_elem, "subEntry"):
+        # Find header which may contain variant
+        x_xoh = find_first_by_class(subentry, "x_xoh")
+
         # Phrase headword
         l_elem = find_first_by_class(subentry, "l")
         if l_elem is not None:
             phrase = normalize_whitespace(get_all_text(l_elem))
-            lines.append(f"**{phrase}**")
+            header_text = f"**{phrase}**"
+
+            # Check for variant group
+            if x_xoh is not None:
+                vg_elem = find_first_by_class(x_xoh, "vg")
+                if vg_elem is not None:
+                    vg_text = normalize_whitespace(format_inline_content(vg_elem))
+                    if vg_text:
+                        header_text += f" {vg_text}"
+
+            lines.append(header_text)
 
         # Definition content (handles se2 senses and/or direct msDicts)
         content_lines = format_subentry_content(subentry)
@@ -821,11 +852,24 @@ def format_phrasal_verbs_section(block_elem: Element) -> str:
     lines = ["---", "", "## PHRASAL VERBS", ""]
 
     for subentry in find_by_class(block_elem, "subEntry"):
+        # Find header which may contain variant
+        x_xoh = find_first_by_class(subentry, "x_xoh")
+
         # Phrasal verb headword
         l_elem = find_first_by_class(subentry, "l")
         if l_elem is not None:
             phrase = normalize_whitespace(get_all_text(l_elem))
-            lines.append(f"**{phrase}**")
+            header_text = f"**{phrase}**"
+
+            # Check for variant group
+            if x_xoh is not None:
+                vg_elem = find_first_by_class(x_xoh, "vg")
+                if vg_elem is not None:
+                    vg_text = normalize_whitespace(format_inline_content(vg_elem))
+                    if vg_text:
+                        header_text += f" {vg_text}"
+
+            lines.append(header_text)
 
         # Definition content (handles se2 senses and/or direct msDicts)
         content_lines = format_subentry_content(subentry)
@@ -842,6 +886,7 @@ def format_derivatives_section(block_elem: Element) -> str:
 
     for subentry in find_by_class(block_elem, "subEntry"):
         parts = []
+        x_xoh = find_first_by_class(subentry, "x_xoh")
 
         # Derivative word
         l_elem = find_first_by_class(subentry, "l")
@@ -849,12 +894,22 @@ def format_derivatives_section(block_elem: Element) -> str:
             word = normalize_whitespace(get_all_text(l_elem))
             parts.append(f"**{word}**")
 
-        # Pronunciation
+        # Pronunciation (check both pr and prx)
         pr_elem = find_first_by_class(subentry, "pr")
+        if pr_elem is None:
+            pr_elem = find_first_by_class(subentry, "prx")
         if pr_elem is not None:
             pron = normalize_whitespace(get_all_text(pr_elem))
             if pron:
                 parts.append(pron)
+
+        # Variant group (between pronunciation and POS)
+        if x_xoh is not None:
+            vg_elem = find_first_by_class(x_xoh, "vg")
+            if vg_elem is not None:
+                vg_text = normalize_whitespace(format_inline_content(vg_elem))
+                if vg_text:
+                    parts.append(vg_text)
 
         # Part of speech
         pos_elem = find_first_by_class(subentry, "pos")
