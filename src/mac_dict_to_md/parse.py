@@ -100,6 +100,7 @@ HANDLED_CLASSES = {
     "t_phrases",
     "t_phrasalVerbs",
     "t_derivatives",
+    "ty_hom",
     "ty_label",
     "x_xh0",
     "x_xd0",
@@ -119,10 +120,10 @@ HANDLED_CLASSES = {
     "xrg",
     "xrlabelGroup",
     "xrlabel",
-    "v",     # variant word (inside vg)
-    "vg",    # variant group
+    "v",  # variant word (inside vg)
+    "vg",  # variant group
     "infg",  # inflection group (e.g., plural forms)
-    "inf",   # inflected form (e.g., the plural word itself)
+    "inf",  # inflected form (e.g., the plural word itself)
 }
 
 # Superscript mapping for homograph numbers and fractions
@@ -1212,9 +1213,7 @@ def main() -> int:
     """Main entry point."""
     global _use_respell
 
-    parser = argparse.ArgumentParser(
-        description="Parse dictionary XML files into Markdown format."
-    )
+    parser = argparse.ArgumentParser(description="Parse dictionary XML files into Markdown format.")
     parser.add_argument(
         "directory",
         type=Path,
