@@ -389,6 +389,32 @@ class TestFormatInlineContent:
         result = parse.format_inline_content(elem)
         assert "Standalone\n" in result
 
+    def test_xr_class_ignored_preserves_content(self):
+        """Test that xr class is ignored but content is preserved."""
+        xml = '<span>before <span class="xr">cross reference</span> after</span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "cross reference" in result
+        assert "before" in result
+        assert "after" in result
+
+    def test_xr_class_no_special_formatting(self):
+        """Test that xr class does not apply any special formatting."""
+        xml = '<span><span class="xr">plain text</span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert result.strip() == "plain text"
+        assert "**" not in result
+        assert "*plain text*" not in result
+
+    def test_xr_with_nested_content(self):
+        """Test xr with nested formatted content."""
+        xml = '<span><span class="xr">see <span class="bold">other</span></span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "see" in result
+        assert "**other**" in result
+
 
 # ============================================================================
 # Section Formatting Tests
@@ -1123,6 +1149,14 @@ class TestTrackElement:
         elem = ET.fromstring(xml)
         parse.track_element(elem)
         assert "hw" not in parse.unhandled_classes
+
+    def test_xr_class_is_handled(self):
+        """Test that xr class is recognized as handled."""
+        parse.unhandled_classes.clear()
+        xml = '<span class="xr">cross reference</span>'
+        elem = ET.fromstring(xml)
+        parse.track_element(elem)
+        assert "xr" not in parse.unhandled_classes
 
 
 class TestReportUnhandled:

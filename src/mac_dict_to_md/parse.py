@@ -112,6 +112,7 @@ HANDLED_CLASSES = {
     "hasSn",
     "entry",
     "x_blk",
+    "xr",
 }
 
 # Superscript mapping for homograph numbers and fractions
