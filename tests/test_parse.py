@@ -415,6 +415,23 @@ class TestFormatInlineContent:
         assert "see" in result
         assert "**other**" in result
 
+    def test_xrg_class_ignored_preserves_content(self):
+        """Test that xrg (cross-reference group) class is ignored but content is preserved."""
+        xml = '<span>from <span class="xrg"><span class="xr"><a title="million">million</a></span></span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert "from" in result
+        assert "million" in result
+
+    def test_xrg_class_no_special_formatting(self):
+        """Test that xrg class does not apply any special formatting."""
+        xml = '<span><span class="xrg">plain text</span></span>'
+        elem = ET.fromstring(xml)
+        result = parse.format_inline_content(elem)
+        assert result.strip() == "plain text"
+        assert "**" not in result
+        assert "*plain text*" not in result
+
 
 # ============================================================================
 # Section Formatting Tests
@@ -1157,6 +1174,14 @@ class TestTrackElement:
         elem = ET.fromstring(xml)
         parse.track_element(elem)
         assert "xr" not in parse.unhandled_classes
+
+    def test_xrg_class_is_handled(self):
+        """Test that xrg class is recognized as handled."""
+        parse.unhandled_classes.clear()
+        xml = '<span class="xrg">cross reference group</span>'
+        elem = ET.fromstring(xml)
+        parse.track_element(elem)
+        assert "xrg" not in parse.unhandled_classes
 
 
 class TestReportUnhandled:

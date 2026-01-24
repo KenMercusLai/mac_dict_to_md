@@ -113,6 +113,7 @@ HANDLED_CLASSES = {
     "entry",
     "x_blk",
     "xr",
+    "xrg",
 }
 
 # Superscript mapping for homograph numbers and fractions
