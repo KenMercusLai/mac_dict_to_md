@@ -366,11 +366,27 @@ def format_inline_content(elem: Element) -> str:
         # Links - convert to markdown links
         elif child.tag == "a":
             title = child.get("title", "")
-            text = normalize_whitespace(format_inline_content(child))
-            if title and text:
-                result.append(f"[{text}]({title}.md)")
-            elif text:
-                result.append(text)
+            # Extract word text and homograph number separately
+            word_text = (child.text or "").strip()
+            hom_num = ""
+            for link_child in child:
+                if has_class(link_child, "ty_hom"):
+                    hom_num = get_all_text(link_child).strip()
+                else:
+                    word_text += get_all_text(link_child)
+            word_text = normalize_whitespace(word_text)
+            # Format link text with superscript homograph
+            if hom_num:
+                sup_hom = "".join(SUPERSCRIPT.get(c, c) for c in hom_num)
+                link_text = f"{word_text}{sup_hom}"
+                filename = f"{title}_{hom_num}.md"
+            else:
+                link_text = word_text
+                filename = f"{title}.md"
+            if title and link_text:
+                result.append(f"[{link_text}]({filename})")
+            elif link_text:
+                result.append(link_text)
 
         # Default: recurse
         else:
