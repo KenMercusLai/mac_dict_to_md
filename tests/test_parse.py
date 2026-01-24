@@ -637,21 +637,6 @@ class TestFormatPosBlock:
         assert "**verb**" in result
         assert "[with object]" in result
 
-    def test_with_subject(self):
-        xml = """
-        <span class="se1">
-            <span class="pos">noun</span>
-            <span class="sj">Astronomy</span>
-            <span class="msDict">
-                <span class="df">a celestial body</span>
-            </span>
-        </span>
-        """
-        elem = ET.fromstring(xml)
-        result = parse.format_pos_block(elem)
-        assert "**noun**" in result
-        assert "*Astronomy*" in result
-
     def test_definition_with_colon_and_examples_inline(self):
         """Test that definition, punctuation, and examples are on same line."""
         xml = """

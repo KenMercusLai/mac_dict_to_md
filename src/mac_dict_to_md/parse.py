@@ -394,6 +394,12 @@ def format_inline_content(elem: Element) -> str:
             if text:
                 result.append(f"*{text}*")
 
+        # Subject label (Astronomy, Chemistry, etc) - italic
+        elif "sj" in classes:
+            text = normalize_whitespace(format_inline_content(child))
+            if text:
+                result.append(f"*{text}*")
+
         # Foreign form in etymology - bold
         elif "ff" in classes:
             text = normalize_whitespace(format_inline_content(child))
@@ -654,13 +660,6 @@ def format_pos_block(se1_elem: Element) -> str:
         gg_text = normalize_whitespace(get_all_text(gg_elem))
         if gg_text:
             pos_line_parts.append(gg_text)
-
-    # Subject label (e.g., "Astronomy", "Chemistry")
-    sj_elem = find_first_by_class(se1_elem, "sj")
-    if sj_elem is not None:
-        sj_text = normalize_whitespace(get_all_text(sj_elem))
-        if sj_text:
-            pos_line_parts.append(f"*{sj_text}*")
 
     # Label group in header (e.g., "British English vulgar slang")
     x_xdh_elem = find_first_by_class(se1_elem, "x_xdh", direct_only=True)
