@@ -1,0 +1,17 @@
+<d:entry xmlns:d="http://www.apple.com/DTDs/DictionaryService-1.0.rng" class="entry" d:title="bow">
+  <span class="hg">
+    <span class="hw" homograph="1">bow<span class="ty_hom">1</span></span>
+    <span class="prx">|bō|</span>
+  </span>
+  <span class="sg">
+    <span class="se1">
+      <d:pos class="pos">noun</d:pos>
+      <span class="msDict">
+        <d:def class="df">a weapon for shooting arrows, typically made of curved wood joined at both ends with a taut string</d:def>
+        <span class="eg">
+          <span class="ex">a bow and arrow</span>
+        </span>
+      </span>
+    </span>
+  </span>
+</d:entry>

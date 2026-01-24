@@ -1,0 +1,23 @@
+<d:entry xmlns:d="http://www.apple.com/DTDs/DictionaryService-1.0.rng" class="entry" d:title="half">
+  <span class="hg">
+    <span class="hw">half</span>
+    <span class="prx">|haf|</span>
+  </span>
+  <span class="sg">
+    <span class="se1">
+      <d:pos class="pos">noun</d:pos>
+      <span class="msDict">
+        <d:def class="df">either of two equal or corresponding parts into which something is or can be divided; <span class="frac"><span class="nu">1</span><span class="dn">2</span></span> of a whole</d:def>
+        <span class="eg">
+          <span class="ex">two and a half years</span>
+        </span>
+      </span>
+    </span>
+    <span class="se1">
+      <d:pos class="pos">adjective</d:pos>
+      <span class="msDict">
+        <d:def class="df">amounting to a half; representing <span class="frac"><span class="nu">1</span><span class="dn">2</span></span></d:def>
+      </span>
+    </span>
+  </span>
+</d:entry>

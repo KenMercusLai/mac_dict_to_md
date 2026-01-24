@@ -1,0 +1,17 @@
+<d:entry xmlns:d="http://www.apple.com/DTDs/DictionaryService-1.0.rng" class="entry" d:title="test">
+  <span class="hg">
+    <span class="hw">test</span>
+    <span class="prx">|test|</span>
+  </span>
+  <span class="sg">
+    <span class="se1">
+      <d:pos class="pos">noun</d:pos>
+      <span class="msDict">
+        <d:def class="df">a procedure intended to establish the quality, performance, or reliability of something</d:def>
+        <span class="eg">
+          <span class="ex">a nuclear test</span>
+        </span>
+      </span>
+    </span>
+  </span>
+</d:entry>

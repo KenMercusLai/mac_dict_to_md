@@ -1,0 +1,78 @@
+<d:entry xmlns:d="http://www.apple.com/DTDs/DictionaryService-1.0.rng" class="entry" d:title="run">
+  <span class="hg">
+    <span class="hw">run</span>
+    <span class="prx">|rən|</span>
+  </span>
+  <span class="sg">
+    <span class="se1">
+      <d:pos class="pos">verb</d:pos>
+      <span class="gg">[no object]</span>
+      <span class="se2">
+        <span class="sn">1</span>
+        <span class="msDict">
+          <d:def class="df">move at a speed faster than a walk</d:def>
+          <span class="eg">
+            <span class="ex">she ran the last few yards</span>
+          </span>
+        </span>
+      </span>
+      <span class="se2">
+        <span class="sn">2</span>
+        <span class="msDict">
+          <d:def class="df">pass or cause to pass quickly in a particular direction</d:def>
+          <span class="eg">
+            <span class="ex">the rumor ran through the town</span>
+          </span>
+        </span>
+        <span class="msDict t_subsense">
+          <span class="sn">•</span>
+          <span class="lg">
+            <span class="reg">historical</span>
+          </span>
+          <d:def class="df">smuggle goods illegally</d:def>
+        </span>
+      </span>
+    </span>
+    <span class="se1">
+      <d:pos class="pos">noun</d:pos>
+      <span class="sj">Baseball</span>
+      <span class="msDict">
+        <d:def class="df">a point scored by a player</d:def>
+      </span>
+    </span>
+  </span>
+  <span class="subEntryBlock t_phrases">
+    <span class="x_xoh">PHRASES</span>
+    <span class="subEntry">
+      <span class="l">run for it</span>
+      <span class="msDict">
+        <d:def class="df">attempt to escape by running away</d:def>
+      </span>
+    </span>
+    <span class="subEntry">
+      <span class="l">on the run</span>
+      <span class="msDict">
+        <d:def class="df">trying to avoid being captured</d:def>
+        <span class="eg">
+          <span class="ex">a fugitive on the run</span>
+        </span>
+      </span>
+    </span>
+  </span>
+  <span class="subEntryBlock t_derivatives">
+    <span class="x_xdh">DERIVATIVES</span>
+    <span class="subEntry">
+      <span class="l">runnable</span>
+      <span class="pr">|ˈrənəb(ə)l|</span>
+      <span class="pos">adjective</span>
+    </span>
+  </span>
+  <span class="etym">
+    <span class="x_xoh">ORIGIN</span>
+    <span class="x_xo1">Old English <span class="ff">rinnan</span>, <span class="ff">irnan</span> (verb), of Germanic origin.</span>
+  </span>
+  <span class="note">
+    <span class="lbl">USAGE</span>
+    The word run has many meanings in English.
+  </span>
+</d:entry>
